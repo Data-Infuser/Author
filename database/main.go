@@ -71,4 +71,5 @@ func ConnDB() *gorm.DB{
 
 func migrate(db *gorm.DB) {
 	db.AutoMigrate(&model.Token{})
+	db.AutoMigrate(&model.User{})
 }

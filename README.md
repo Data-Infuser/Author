@@ -10,19 +10,14 @@
 
 * config/database-sample.yaml 참고하여 config/database.yaml 생성
 
-## protoc 수행
+## Proto Buffer 공통 모듈 다운로드
 
 ```sh
-$ make
+$ git clone git@gitlab.com:promptech1/data-infuser/infuser-protobuf.git
 ```
 
 ## 개발 환경 실행
 * gRPC Server
 ```sh
 go run main.go -logtostderr=true
-```
-
-* gRPC Client(server 통신 확인)
-```sh
-go run grpc_client/main.go -logtostderr=true
 ```

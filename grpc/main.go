@@ -6,7 +6,8 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"gitlab.com/promptech1/infuser-author/database"
-	"gitlab.com/promptech1/infuser-author/gen/gitlab.com/promptech1/infuser-author/gen"
+	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
+
 	repo "gitlab.com/promptech1/infuser-author/repository"
 	"gitlab.com/promptech1/infuser-author/service"
 	"google.golang.org/grpc"
@@ -32,13 +33,17 @@ func Run(ctx context.Context, network, address string) error {
 	tokenRepo := repo.NewTokenRepository(db)
 	tokenService := service.NewTokenService(tokenRepo)
 
+	userRepo := repo.NewUserRepository(db)
+	userService := service.NewUserService(userRepo)
+
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(),
 		)),
 	)
 
-	gen.RegisterTokenManagerServer(s, newTokenServer(tokenService))
+	grpc_author.RegisterTokenManagerServer(s, newTokenServer(tokenService))
+	grpc_author.RegisterUserManagerServer(s, newUserServer(userService))
 
 	go func() {
 		defer s.GracefulStop()
