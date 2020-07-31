@@ -10,6 +10,10 @@ type userServer struct {
 	userService service.UserService
 }
 
+func (u userServer) Login(ctx context.Context, req *grpc_author.UserReq) (*grpc_author.UserRes, error) {
+	return u.userService.Login(req)
+}
+
 func (u userServer) Create(ctx context.Context, req *grpc_author.UserReq) (*grpc_author.UserRes, error) {
 	return u.userService.Create(req)
 }

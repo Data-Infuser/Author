@@ -35,6 +35,8 @@ func (r *userRepositoryDB) FindOneByEmail(email string) *model.User {
 
 func (r *userRepositoryDB) Create(u *model.User) (*model.User, error) {
 	u.EncPassword()
+	glog.Infof("User password: %s", u.Password)
+
 	if dbc := r.DB.Create(u); dbc.Error != nil {
 		glog.Errorf("Error in user repository create: %v", dbc.Error)
 		return nil, fmt.Errorf("Error in user repository create: %v", dbc.Error)

@@ -14,17 +14,18 @@ type User struct {
 	Password string
 }
 
-func (u User) EncPassword() {
+func (u *User) EncPassword() {
 	bytes := []byte(u.Password)
 	hash, err := bcrypt.GenerateFromPassword(bytes, bcrypt.MinCost)
 	if err != nil {
 		glog.Error(err)
 	}
 
+	glog.Infof("Hashed Password: %s", string(hash))
 	u.Password = string(hash)
 }
 
-func (u User) GetgRPCModel() *grpc_author.UserRes {
+func (u *User) GetgRPCModel() *grpc_author.UserRes {
 	return &grpc_author.UserRes{
 		Id: uint32(u.ID),
 		Email: u.Email,

@@ -10,14 +10,23 @@ import (
 
 type UserService interface {
 	Create(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error)
+	Login(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error)
 }
 
 type userService struct {
 	userRepo repo.UserRepository
 }
 
-func NewUserService(repo repo.UserRepository) UserService {
-	return &userService{userRepo: repo}
+func (s userService) Login(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error) {
+	user := s.userRepo.FindOneByEmail(userReq.Email)
+
+
+	if user.Password == userReq.Password {
+		// TODO 향후 인증된 결과에 대한 처리(jwt 등) 필요함
+		return user.GetgRPCModel(), nil
+	}
+
+	return nil, status.Errorf(codes.Unauthenticated, "로그인 정보를 확인하세요")
 }
 
 func (s userService) Create(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error) {
@@ -39,4 +48,8 @@ func (s userService) Create(userReq *grpc_author.UserReq) (*grpc_author.UserRes,
 	}
 
 	return user.GetgRPCModel(), nil
+}
+
+func NewUserService(repo repo.UserRepository) UserService {
+	return &userService{userRepo: repo}
 }
