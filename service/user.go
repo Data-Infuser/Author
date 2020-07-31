@@ -20,13 +20,18 @@ type userService struct {
 func (s userService) Login(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error) {
 	user := s.userRepo.FindOneByEmail(userReq.Email)
 
+	if user != nil {
+		user.EncPassword()
 
-	if user.Password == userReq.Password {
-		// TODO 향후 인증된 결과에 대한 처리(jwt 등) 필요함
-		return user.GetgRPCModel(), nil
+		if user.Password == userReq.Password {
+			// TODO 향후 인증된 결과에 대한 처리(jwt 등) 필요함
+			return user.GetgRPCModel(), nil
+		}
+
+		return nil, status.Errorf(codes.Unauthenticated, "비밀번호를 확인하세요")
 	}
 
-	return nil, status.Errorf(codes.Unauthenticated, "로그인 정보를 확인하세요")
+	return nil, status.Errorf(codes.Unauthenticated, "등록된 사용자 정보가 없습니다.")
 }
 
 func (s userService) Create(userReq *grpc_author.UserReq) (*grpc_author.UserRes, error) {
