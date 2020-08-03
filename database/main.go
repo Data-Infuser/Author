@@ -74,4 +74,5 @@ func migrate(db *gorm.DB) {
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.App{})
 	db.AutoMigrate(&model.AppToken{})
+	db.AutoMigrate(&model.AppTokenHistory{})
 }

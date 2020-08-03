@@ -6,7 +6,7 @@ import (
 )
 
 type TokenService interface {
-	CheckToken(token string) model.Token
+	CheckToken(token string) *model.Token
 }
 
 type tokenService struct {
@@ -17,7 +17,7 @@ func NewTokenService(repo repo.TokenRepository) TokenService {
 	return &tokenService{repo: repo}
 }
 
-func (t tokenService) CheckToken(tokenVal string) model.Token {
+func (t tokenService) CheckToken(tokenVal string) *model.Token {
 	token := t.repo.FindByToken(tokenVal)
 	return token
 }

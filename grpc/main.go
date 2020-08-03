@@ -36,6 +36,10 @@ func Run(ctx context.Context, network, address string) error {
 	userRepo := repo.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
 
+	appRepo := repo.NewAppRepository(db)
+	appTokenRepo := repo.NewAppTokenRepository(db)
+	appTokenService := service.NewAppTokenService(appTokenRepo, appRepo, tokenRepo)
+
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(),
@@ -44,6 +48,7 @@ func Run(ctx context.Context, network, address string) error {
 
 	grpc_author.RegisterTokenManagerServer(s, newTokenServer(tokenService))
 	grpc_author.RegisterUserManagerServer(s, newUserServer(userService))
+	grpc_author.RegisterApiAuthServiceServer(s, newApiAuthServer(appTokenService))
 
 	go func() {
 		defer s.GracefulStop()

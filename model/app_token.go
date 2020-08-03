@@ -9,4 +9,6 @@ type AppToken struct {
 	App App
 	TokenID uint
 	Token Token
+
+	Histories []AppTokenHistory
 }
