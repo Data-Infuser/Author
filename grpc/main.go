@@ -31,7 +31,6 @@ func Run(ctx context.Context, network, address string) error {
 	defer db.Close()
 
 	tokenRepo := repo.NewTokenRepository(db)
-	tokenService := service.NewTokenService(tokenRepo)
 
 	userRepo := repo.NewUserRepository(db)
 	userService := service.NewUserService(userRepo)
@@ -46,9 +45,9 @@ func Run(ctx context.Context, network, address string) error {
 		)),
 	)
 
-	grpc_author.RegisterTokenManagerServer(s, newTokenServer(tokenService))
 	grpc_author.RegisterUserManagerServer(s, newUserServer(userService))
 	grpc_author.RegisterApiAuthServiceServer(s, newApiAuthServer(appTokenService))
+	grpc_author.RegisterAppTokenManagerServer(s, newAppTokenServer(appTokenService))
 
 	go func() {
 		defer s.GracefulStop()

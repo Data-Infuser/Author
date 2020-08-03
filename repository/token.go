@@ -6,6 +6,7 @@ import (
 )
 
 type TokenRepository interface {
+	Create(token string) *model.Token
 	FindByToken(token string) *model.Token
 }
 
@@ -15,6 +16,13 @@ type tokenRepositoryDB struct {
 
 func NewTokenRepository(db *gorm.DB) TokenRepository {
 	return &tokenRepositoryDB{DB: db}
+}
+
+func (r *tokenRepositoryDB) Create(token string) *model.Token {
+	t := &model.Token{Token: token}
+	r.DB.Create(t)
+
+	return t
 }
 
 func (r *tokenRepositoryDB) FindByToken(token string) *model.Token {
