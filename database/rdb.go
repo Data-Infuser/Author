@@ -20,6 +20,8 @@ type DBConfig struct {
 	Port     int    `yaml:"port"`
 	User     string `yaml:"user"`
 	Password string `yaml:"password"`
+	IdleConns int `yaml:"idleConns"`
+	MaxOpenConns int `yaml:"maxOpenConns"`
 }
 
 type DBEnvConfig struct {
@@ -61,8 +63,8 @@ func ConnDB() *gorm.DB{
 		panic(err.Error())
 	}
 
-	db.DB().SetMaxIdleConns(10)
-	db.DB().SetMaxOpenConns(100)
+	db.DB().SetMaxIdleConns(dbConfig.IdleConns)
+	db.DB().SetMaxOpenConns(dbConfig.MaxOpenConns)
 
 	migrate(db)
 
@@ -70,9 +72,9 @@ func ConnDB() *gorm.DB{
 }
 
 func migrate(db *gorm.DB) {
+	db.AutoMigrate(&model.AppToken{})
 	db.AutoMigrate(&model.Token{})
 	db.AutoMigrate(&model.User{})
 	db.AutoMigrate(&model.App{})
-	db.AutoMigrate(&model.AppToken{})
 	db.AutoMigrate(&model.AppTokenHistory{})
 }

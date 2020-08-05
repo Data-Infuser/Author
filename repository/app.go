@@ -6,7 +6,7 @@ import (
 )
 
 type AppRepository interface {
-	FindByNameSpace(nameSpace string) *model.App
+	FindByNameSpace(nameSpace string) (*model.App, error)
 }
 
 type appRepositoryDB struct {
@@ -17,12 +17,12 @@ func NewAppRepository(db *gorm.DB) AppRepository {
 	return &appRepositoryDB{DB: db}
 }
 
-func (r *appRepositoryDB) FindByNameSpace(nameSpace string) *model.App {
+func (r *appRepositoryDB) FindByNameSpace(nameSpace string) (*model.App, error) {
 	app := model.App{}
 
-	if r.DB.Debug().Where("name_space = ?", nameSpace).First(&app).RecordNotFound() {
-		return nil
+	if err := r.DB.Where("name_space = ?", nameSpace).First(&app).Error; gorm.IsRecordNotFoundError(err) {
+		return nil, err
 	}
 
-	return &app
+	return &app, nil
 }

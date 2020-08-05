@@ -30,6 +30,8 @@ func Run(ctx context.Context, network, address string) error {
 	db := database.ConnDB()
 	defer db.Close()
 
+	redisDB := database.ConnRedis(ctx)
+
 	tokenRepo := repo.NewTokenRepository(db)
 
 	userRepo := repo.NewUserRepository(db)
@@ -37,7 +39,7 @@ func Run(ctx context.Context, network, address string) error {
 
 	appRepo := repo.NewAppRepository(db)
 	appTokenRepo := repo.NewAppTokenRepository(db)
-	appTokenService := service.NewAppTokenService(appTokenRepo, appRepo, tokenRepo)
+	appTokenService := service.NewAppTokenService(appTokenRepo, appRepo, tokenRepo, redisDB)
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
@@ -46,7 +48,11 @@ func Run(ctx context.Context, network, address string) error {
 	)
 
 	grpc_author.RegisterUserManagerServer(s, newUserServer(userService))
+
+	// Token 기반의 인증 처리
 	grpc_author.RegisterApiAuthServiceServer(s, newApiAuthServer(appTokenService))
+
+	// App 서비스 등록/수정/삭제 처리
 	grpc_author.RegisterAppTokenManagerServer(s, newAppTokenServer(appTokenService))
 
 	go func() {

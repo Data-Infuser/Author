@@ -12,7 +12,7 @@ type User struct {
 	gorm.Model
 	Email    string `gorm:"type:varchar(100);unique_index"`
 	Name     string `gorm:"type:varchar(20);"`
-	Password string
+	Password string `gorm:"size:191;"`
 }
 
 // EncPassword : 사용자 비밀번호 암호화 처리

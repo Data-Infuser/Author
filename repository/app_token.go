@@ -8,7 +8,7 @@ import (
 
 type AppTokenRepository interface {
 	Find(appID uint, tokenID uint) *model.AppToken
-	FindTodayUsage(appToken *model.AppToken) int
+	FindTodayUsage(appToken *model.AppToken) uint
 	Create(appID uint, tokenID uint) *model.AppToken
 }
 
@@ -39,12 +39,12 @@ func (r appTokenRepositoryDB) Find(appID uint, tokenID uint) *model.AppToken {
 	return &appToken
 }
 
-func (r appTokenRepositoryDB) FindTodayUsage(appToken *model.AppToken) int {
+func (r appTokenRepositoryDB) FindTodayUsage(appToken *model.AppToken) uint {
 	t := time.Now()
 	today := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, t.Location())
 	tomorrow := today.AddDate(0, 0, 1)
 
-	var count int
+	var count uint
 
 	r.DB.Where(
 		"created_at BETWEEN ? AND ?", today, tomorrow,

@@ -7,7 +7,7 @@ import (
 
 type TokenRepository interface {
 	Create(token string) *model.Token
-	FindByToken(token string) *model.Token
+	FindByToken(token string) (*model.Token, error)
 }
 
 type tokenRepositoryDB struct {
@@ -25,12 +25,12 @@ func (r *tokenRepositoryDB) Create(token string) *model.Token {
 	return t
 }
 
-func (r *tokenRepositoryDB) FindByToken(token string) *model.Token {
+func (r *tokenRepositoryDB) FindByToken(token string) (*model.Token, error) {
 	t := model.Token{}
 
-	if r.DB.Where("token = ?", token).First(&t).RecordNotFound() {
-		return nil
+	if err := r.DB.Where("token = ?", token).First(&t).Error; gorm.IsRecordNotFoundError(err) {
+		return nil, err
 	}
 
-	return &t
+	return &t, nil
 }
