@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-const trafficSet = "usage-set"
+const TrafficSet = "usage-set"
 
 type AppTokenService interface {
 	CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code
@@ -47,12 +47,12 @@ func (s appTokenService) Regist(token string, nameSpace string) {
 }
 
 func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code{
+	glog.Info("CheckAppToken: ", token, nameSpace)
 	var app *model.App
 	var t *model.Token
 	var appID uint
 	var tokenID uint
 	var maxTraffic uint
-
 
 	// APP 정보 조회 (1.redis, 2.RDB)
 	nsKey := "ns:" + nameSpace
@@ -88,19 +88,20 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_auth
 		s.redisDB.Set(tKey, t.ID)
 		tokenID = t.ID
 	} else {
-		glog.Info("find token in redis ============")
+		glog.Info("find token in redis: ", tokenIDStr)
 		tokenID = tokenIDStr.(uint)
 	}
 
 	// App-Token 정보 조회
 	appToken := s.repo.Find(appID, tokenID)
 	if appToken != nil {
-		trafficKey := fmt.Sprintf("traffic:%d:%d", appID, tokenID)
+		glog.Infof("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.ID, appID, tokenID)
+		trafficKey := fmt.Sprintf("traffic:%d", appToken.ID)
 
 		count, err := s.redisDB.Get(trafficKey, "uint")
 		if err != nil && err == redis.Nil {
 			count = uint(0)
-			s.redisDB.SAdd(trafficSet, trafficKey)
+			s.redisDB.SAdd(TrafficSet, trafficKey)
 		}
 
 		//count := s.repo.FindTodayUsage(appToken)

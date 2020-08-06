@@ -67,3 +67,15 @@ func (r *RedisDB) Incr(key string) (int64, error){
 func (r *RedisDB) SAdd(key string, member string) (int64, error){
 	return r.client.SAdd(r.ctx, key, member).Result()
 }
+
+func (r *RedisDB) SMembers(key string) ([]string, error){
+	return r.client.SMembers(r.ctx, key).Result()
+}
+
+func (r *RedisDB) LPush(key string, value string) (int64, error){
+	return r.client.LPush(r.ctx, key, value).Result()
+}
+
+func (r *RedisDB) LPop(key string) (string, error){
+	return r.client.LPop(r.ctx, key).Result()
+}

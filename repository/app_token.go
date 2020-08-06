@@ -28,11 +28,9 @@ func (r appTokenRepositoryDB) Create(appID uint, tokenID uint) *model.AppToken {
 }
 
 func (r appTokenRepositoryDB) Find(appID uint, tokenID uint) *model.AppToken {
-	appToken := model.AppToken{
-		AppID: appID, TokenID: tokenID,
-	}
+	appToken := model.AppToken{}
 
-	if r.DB.First(&appToken).RecordNotFound() {
+	if r.DB.Where("app_id = ? AND token_id = ?", appID, tokenID).First(&appToken).RecordNotFound() {
 		return nil
 	}
 
