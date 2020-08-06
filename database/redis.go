@@ -3,6 +3,8 @@ package database
 import (
 	"context"
 	"github.com/go-redis/redis/v8"
+	"github.com/golang/glog"
+	"strconv"
 )
 
 type RedisDB struct {
@@ -34,9 +36,23 @@ func (r *RedisDB) Set(key string, value interface{}) (string, error) {
 	return key, err
 }
 
-func (r *RedisDB) Get(key string) (string, error) {
-	return r.client.Get(r.ctx, key).Result()
+func (r *RedisDB) Get(key string, resultType string) (interface{}, error) {
+	result, err := r.client.Get(r.ctx, key).Result()
+	if err != nil {
+		return result, err
+	}
 
+	switch resultType {
+	case "uint":
+		temp, err := strconv.ParseUint(result, 10, 32)
+		if err != nil {
+			glog.Fatal(err)
+			return temp, err
+		}
+		return uint(temp), nil
+	default:
+		return result, err
+	}
 }
 
 func (r *RedisDB) Delete(key string) (string, error) {

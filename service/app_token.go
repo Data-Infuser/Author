@@ -55,7 +55,7 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 	var maxTraffic uint
 
 	nsKey := "ns:" + nameSpace
-	appInfo, err := s.redisDB.Get(nsKey)
+	appInfo, err := s.redisDB.Get(nsKey, "string")
 	if err != nil && err == redis.Nil {
 		if app, err = s.appRepo.FindByNameSpace(nameSpace); err != nil {
 			return enum.UNREGISTERED_SERVICE
@@ -67,7 +67,8 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 		maxTraffic = app.MaxTraffic
 	} else {
 		glog.Info("find app in redis ============")
-		splits := strings.Split(appInfo, ":")
+		appInfoStr := appInfo.(string)
+		splits := strings.Split(appInfoStr, ":")
 		appIDStr := splits[0]
 		temp, _ := strconv.Atoi(appIDStr)
 		appID = uint(temp)
@@ -77,7 +78,7 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 	}
 
 	tKey := "t:" + token
-	tokenIDStr, err := s.redisDB.Get(tKey)
+	tokenIDStr, err := s.redisDB.Get(tKey, "uint")
 	if err != nil && err == redis.Nil {
 		if t, err = s.tokenRepo.FindByToken(token); err != nil {
 			return enum.UNAUTHORIZED
@@ -86,8 +87,7 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 		tokenID = t.ID
 	} else {
 		glog.Info("find token in redis ============")
-		temp, _ := strconv.Atoi(tokenIDStr)
-		tokenID = uint(temp)
+		tokenID = tokenIDStr.(uint)
 	}
 
 	appToken := s.repo.Find(appID, tokenID)
