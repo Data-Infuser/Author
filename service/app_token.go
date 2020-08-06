@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"context"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/glog"
 	"gitlab.com/promptech1/infuser-author/database"
@@ -24,16 +25,12 @@ type appTokenService struct {
 	tokenRepo repo.TokenRepository
 }
 
-func NewAppTokenService(
-	repo repo.AppTokenRepository,
-	appRepo repo.AppRepository,
-	tokenRepo repo.TokenRepository,
-	redisDB *database.RedisDB) AppTokenService {
+func NewAppTokenService(ctx context.Context) AppTokenService {
 	return &appTokenService{
-		repo: repo,
-		appRepo: appRepo,
-		tokenRepo: tokenRepo,
-		redisDB: redisDB,
+		repo: ctx.Value("appTokenRepo").(repo.AppTokenRepository),
+		appRepo: ctx.Value("appRepo").(repo.AppRepository),
+		tokenRepo: ctx.Value("tokenRepo").(repo.TokenRepository),
+		redisDB: ctx.Value("redisDB").(*database.RedisDB),
 	}
 }
 

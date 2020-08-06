@@ -4,7 +4,10 @@ import (
 	"context"
 	"flag"
 	"github.com/golang/glog"
+	"gitlab.com/promptech1/infuser-author/database"
 	"gitlab.com/promptech1/infuser-author/grpc"
+	repo "gitlab.com/promptech1/infuser-author/repository"
+	"gitlab.com/promptech1/infuser-author/service"
 )
 
 var (
@@ -17,6 +20,27 @@ func main() {
 	defer glog.Flush()
 
 	ctx := context.Background()
+
+	db := database.ConnDB()
+	defer db.Close()
+	ctx = context.WithValue(ctx, "db", db)
+
+	redisDB := database.ConnRedis(ctx)
+	ctx = context.WithValue(ctx, "redisDB", redisDB)
+
+	tokenRepo := repo.NewTokenRepository(db)
+	appRepo := repo.NewAppRepository(db)
+	appTokenRepo := repo.NewAppTokenRepository(db)
+	//userRepo := repo.NewUserRepository(db)
+
+	ctx = context.WithValue(ctx, "tokenRepo", tokenRepo)
+	ctx = context.WithValue(ctx, "appRepo", appRepo)
+	ctx = context.WithValue(ctx, "appTokenRepo", appTokenRepo)
+
+	//userService := service.NewUserService(userRepo)
+	appTokenService := service.NewAppTokenService(ctx)
+
+	ctx = context.WithValue(ctx, "appTokenService", appTokenService)
 
 	if err := grpc.Run(ctx, *network, *addr); err != nil {
 		glog.Fatal(err)

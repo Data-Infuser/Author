@@ -5,10 +5,8 @@ import (
 	"github.com/golang/glog"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
-	"gitlab.com/promptech1/infuser-author/database"
 	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
 
-	repo "gitlab.com/promptech1/infuser-author/repository"
 	"gitlab.com/promptech1/infuser-author/service"
 	"google.golang.org/grpc"
 	"log"
@@ -27,19 +25,6 @@ func Run(ctx context.Context, network, address string) error {
 		}
 	}()
 
-	db := database.ConnDB()
-	defer db.Close()
-
-	redisDB := database.ConnRedis(ctx)
-
-	tokenRepo := repo.NewTokenRepository(db)
-
-	userRepo := repo.NewUserRepository(db)
-	userService := service.NewUserService(userRepo)
-
-	appRepo := repo.NewAppRepository(db)
-	appTokenRepo := repo.NewAppTokenRepository(db)
-	appTokenService := service.NewAppTokenService(appTokenRepo, appRepo, tokenRepo, redisDB)
 
 	s := grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
@@ -47,7 +32,7 @@ func Run(ctx context.Context, network, address string) error {
 		)),
 	)
 
-	grpc_author.RegisterUserManagerServer(s, newUserServer(userService))
+	appTokenService := ctx.Value("appTokenService").(service.AppTokenService)
 
 	// Token 기반의 인증 처리
 	grpc_author.RegisterApiAuthServiceServer(s, newApiAuthServer(appTokenService))
