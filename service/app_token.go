@@ -1,20 +1,22 @@
 package service
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/glog"
 	"gitlab.com/promptech1/infuser-author/database"
-	"gitlab.com/promptech1/infuser-author/enum"
+	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
 	"gitlab.com/promptech1/infuser-author/model"
 	repo "gitlab.com/promptech1/infuser-author/repository"
 	"strconv"
 	"strings"
 )
 
+const trafficSet = "usage-set"
+
 type AppTokenService interface {
-	CheckAppToken(token string, nameSpace string) enum.AuthCode
+	CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code
 	Regist(token string, nameSpace string)
 }
 
@@ -44,28 +46,31 @@ func (s appTokenService) Regist(token string, nameSpace string) {
 	s.repo.Create(app.ID, t.ID)
 }
 
-func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.AuthCode{
+func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code{
 	var app *model.App
 	var t *model.Token
 	var appID uint
 	var tokenID uint
 	var maxTraffic uint
 
+
+	// APP 정보 조회 (1.redis, 2.RDB)
 	nsKey := "ns:" + nameSpace
-	appInfo, err := s.redisDB.Get(nsKey, "string")
-	if err != nil && err == redis.Nil {
+	if appInfo, err := s.redisDB.Get(nsKey, "string"); err != nil && err == redis.Nil {
+		glog.Info("find app in db ============")
 		if app, err = s.appRepo.FindByNameSpace(nameSpace); err != nil {
-			return enum.UNREGISTERED_SERVICE
+			return grpc_author.ApiAuthRes_UNREGISTERED_SERVICE
 		}
 
-		glog.Info("find app in db ============")
+		// Redis에 저장하는 APP 정보는 ID와 최대 트래픽(delimiter를 ':' 로 사용)
 		s.redisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.ID, app.MaxTraffic))
 		appID = app.ID
 		maxTraffic = app.MaxTraffic
 	} else {
-		glog.Info("find app in redis ============")
+		glog.Infof("find app in redis: %s", appInfo)
 		appInfoStr := appInfo.(string)
 		splits := strings.Split(appInfoStr, ":")
+
 		appIDStr := splits[0]
 		temp, _ := strconv.Atoi(appIDStr)
 		appID = uint(temp)
@@ -74,11 +79,11 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 		maxTraffic = uint(temp)
 	}
 
+	// Token 정보 조회(1.redis, 2.RDB)
 	tKey := "t:" + token
-	tokenIDStr, err := s.redisDB.Get(tKey, "uint")
-	if err != nil && err == redis.Nil {
+	if tokenIDStr, err := s.redisDB.Get(tKey, "uint"); err != nil && err == redis.Nil {
 		if t, err = s.tokenRepo.FindByToken(token); err != nil {
-			return enum.UNAUTHORIZED
+			return grpc_author.ApiAuthRes_UNAUTHORIZED
 		}
 		s.redisDB.Set(tKey, t.ID)
 		tokenID = t.ID
@@ -87,16 +92,26 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) enum.Auth
 		tokenID = tokenIDStr.(uint)
 	}
 
+	// App-Token 정보 조회
 	appToken := s.repo.Find(appID, tokenID)
 	if appToken != nil {
-		count := s.repo.FindTodayUsage(appToken)
-		if maxTraffic >= count {
-			// TODO: API 인증 횟수 추가 처리 필요함
-			return enum.VALID
+		trafficKey := fmt.Sprintf("traffic:%d:%d", appID, tokenID)
+
+		count, err := s.redisDB.Get(trafficKey, "uint")
+		if err != nil && err == redis.Nil {
+			count = uint(0)
+			s.redisDB.SAdd(trafficSet, trafficKey)
 		}
 
-		return enum.LIMIT_EXCEEDED
+		//count := s.repo.FindTodayUsage(appToken)
+		if maxTraffic >= count.(uint) {
+			// 인증키 활용횟수 Increment. 통계 저장은 별도 처리
+			s.redisDB.Incr(trafficKey)
+			return grpc_author.ApiAuthRes_VALID
+		}
+
+		return grpc_author.ApiAuthRes_LIMIT_EXCEEDED
 	}
 
-	return enum.UNAUTHORIZED
+	return grpc_author.ApiAuthRes_UNAUTHORIZED
 }

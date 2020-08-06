@@ -59,3 +59,11 @@ func (r *RedisDB) Delete(key string) (string, error) {
 	_, err := r.client.Del(r.ctx, key).Result()
 	return key, err
 }
+
+func (r *RedisDB) Incr(key string) (int64, error){
+	return r.client.Incr(r.ctx, key).Result()
+}
+
+func (r *RedisDB) SAdd(key string, member string) (int64, error){
+	return r.client.SAdd(r.ctx, key, member).Result()
+}

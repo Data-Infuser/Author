@@ -14,7 +14,7 @@ func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (
 	authCode := a.appTokenService.CheckAppToken(req.Token, req.NameSpace)
 
 	res := &grpc_author.ApiAuthRes{
-		Code: authCode.GetgRPCCode(),
+		Code: authCode,
 	}
 
 	return res, nil
