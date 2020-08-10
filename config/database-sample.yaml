@@ -1,19 +1,8 @@
-dev:
-  dbName: "author"
-  dbType: "mysql"
-  host: "localhost"
-  port: 3306
-  user: ""
-  password: ""
-  idleConns: 4
-  maxOpenConns: 10
-
-prod:
-  dbName: "infuser_author"
-  dbType: "mysql"
-  host: "localhost"
-  port: 3306
-  user: ""
-  password: ""
-  idleConns: 10
-  maxOpenConns: 100
+dbName: "author"
+dbType: "mysql"
+host: "localhost"
+port: 3306
+user: ""
+password: ""
+idleConns: 4
+maxOpenConns: 10

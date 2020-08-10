@@ -21,18 +21,18 @@ type AppTokenService interface {
 }
 
 type appTokenService struct {
-	redisDB *database.RedisDB
-	repo repo.AppTokenRepository
-	appRepo repo.AppRepository
+	redisDB   *database.RedisDB
+	repo      repo.AppTokenRepository
+	appRepo   repo.AppRepository
 	tokenRepo repo.TokenRepository
 }
 
 func NewAppTokenService(ctx context.Context) AppTokenService {
 	return &appTokenService{
-		repo: ctx.Value("appTokenRepo").(repo.AppTokenRepository),
-		appRepo: ctx.Value("appRepo").(repo.AppRepository),
+		repo:      ctx.Value("appTokenRepo").(repo.AppTokenRepository),
+		appRepo:   ctx.Value("appRepo").(repo.AppRepository),
 		tokenRepo: ctx.Value("tokenRepo").(repo.TokenRepository),
-		redisDB: ctx.Value("redisDB").(*database.RedisDB),
+		redisDB:   ctx.Value("redisDB").(*database.RedisDB),
 	}
 }
 
@@ -46,7 +46,7 @@ func (s appTokenService) Regist(token string, nameSpace string) {
 	s.repo.Create(app.Id, t.Id)
 }
 
-func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code{
+func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code {
 	glog.Info("CheckAppToken: ", token, nameSpace)
 	var app *model.App
 	var t *model.Token

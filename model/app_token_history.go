@@ -3,9 +3,10 @@ package model
 import "time"
 
 type AppTokenHistory struct {
-	ID        uint `gorm:"primary_key"`
-	AppTokenID uint `gorm:"index"`
-	AppToken AppToken
+	Id          uint `xorm:"pk autoincr"`
+	AppTokenId  uint `xorm:"index"`
 	CallTraffic uint
-	CreatedAt time.Time `gorm:"index"`
+	CreatedAt   time.Time `xorm:"created"`
+
+	AppToken AppToken `xorm:"- extends"`
 }

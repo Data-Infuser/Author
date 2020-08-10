@@ -1,17 +1,17 @@
-package grpc
+package server
 
 import (
 	"context"
+	"gitlab.com/promptech1/infuser-author/handler"
 	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
-	"gitlab.com/promptech1/infuser-author/service"
 )
 
 type apiAuthServer struct {
-	appTokenService service.AppTokenService
+	handler *handler.AppTokenHandler
 }
 
 func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (*grpc_author.ApiAuthRes, error) {
-	authCode := a.appTokenService.CheckAppToken(req.Token, req.NameSpace)
+	authCode := a.handler.CheckAppToken(req.Token, req.NameSpace)
 
 	res := &grpc_author.ApiAuthRes{
 		Code: authCode,
@@ -20,8 +20,8 @@ func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (
 	return res, nil
 }
 
-func newApiAuthServer(appTokenService service.AppTokenService) grpc_author.ApiAuthServiceServer {
+func newApiAuthServer(handler *handler.AppTokenHandler) grpc_author.ApiAuthServiceServer {
 	return &apiAuthServer{
-		appTokenService: appTokenService,
+		handler: handler,
 	}
 }

@@ -8,7 +8,8 @@
 
 ## Configuration
 
-* config/database-sample.yaml 참고하여 config/database.yaml 생성
+* config/database-sample.yaml 참고하여 DB Config 생성
+  * config/dev/database.yaml 또는 config/prod/database.yaml
 
 ## Proto Buffer 공통 모듈 다운로드
 

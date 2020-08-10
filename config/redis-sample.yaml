@@ -1,0 +1,6 @@
+addr: "localhost"
+port: 6379
+password: ""
+db: 0
+minIdleConns: 5
+poolSize: 10

@@ -1,0 +1,7 @@
+server:
+  port: 9090
+
+logger:
+    mode: "std"
+    tag: "infuser-author"
+    id: "1"
