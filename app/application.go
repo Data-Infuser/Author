@@ -15,6 +15,8 @@ import (
 	"gopkg.in/yaml.v2"
 	"xorm.io/xorm"
 	"xorm.io/xorm/log"
+
+	_ "github.com/jinzhu/gorm/dialects/mysql"
 )
 
 // Application define a mode of running app

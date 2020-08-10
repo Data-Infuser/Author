@@ -10,6 +10,8 @@
 
 * config/database-sample.yaml 참고하여 DB Config 생성
   * config/dev/database.yaml 또는 config/prod/database.yaml
+* config/redis-sample.yaml 참고하여 Redis Config 생성
+  * config/dev/redis.yaml 또는 config/prod/redis.yaml
 
 ## Proto Buffer 공통 모듈 다운로드
 

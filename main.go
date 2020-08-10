@@ -23,8 +23,6 @@ var (
 	network = flag.String("network", "tcp", `one of "tcp" or "unix". Must be consistent to -endpoint`)
 )
 
-const trafficQueueName = "traffic-history"
-
 func main() {
 	flag.Parse()
 	defer glog.Flush()
