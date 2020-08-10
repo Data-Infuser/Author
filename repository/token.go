@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"github.com/jinzhu/gorm"
 	"gitlab.com/promptech1/infuser-author/model"
+	"xorm.io/xorm"
 )
 
 type TokenRepository interface {
@@ -11,24 +11,24 @@ type TokenRepository interface {
 }
 
 type tokenRepositoryDB struct {
-	DB *gorm.DB
+	DB *xorm.Engine
 }
 
-func NewTokenRepository(db *gorm.DB) TokenRepository {
+func NewTokenRepository(db *xorm.Engine) TokenRepository {
 	return &tokenRepositoryDB{DB: db}
 }
 
 func (r *tokenRepositoryDB) Create(token string) *model.Token {
 	t := &model.Token{Token: token}
-	r.DB.Create(t)
+	r.DB.Insert(t)
 
 	return t
 }
 
 func (r *tokenRepositoryDB) FindByToken(token string) (*model.Token, error) {
-	t := model.Token{}
+	t := model.Token{Token: token}
 
-	if err := r.DB.Where("token = ?", token).First(&t).Error; gorm.IsRecordNotFoundError(err) {
+	if _, err := r.DB.Get(&t); err != nil {
 		return nil, err
 	}
 

@@ -7,6 +7,7 @@ import (
 	"github.com/go-redis/redis/v8"
 	"github.com/golang/glog"
 	"github.com/robfig/cron/v3"
+	"gitlab.com/promptech1/infuser-author/constant"
 	"gitlab.com/promptech1/infuser-author/database"
 	"gitlab.com/promptech1/infuser-author/grpc"
 	"gitlab.com/promptech1/infuser-author/model"
@@ -32,10 +33,10 @@ func main() {
 
 	db := database.ConnDB()
 	defer db.Close()
-	ctx = context.WithValue(ctx, "db", db)
+	ctx = context.WithValue(ctx, constant.DB, db)
 
 	redisDB := database.ConnRedis(ctx)
-	ctx = context.WithValue(ctx, "redisDB", redisDB)
+	ctx = context.WithValue(ctx, constant.REDIS_DB, redisDB)
 
 	tokenRepo := repo.NewTokenRepository(db)
 	appRepo := repo.NewAppRepository(db)
@@ -98,7 +99,6 @@ func runCron(ctx context.Context) {
 
 		if len(histories) > 0 {
 			appTokenHistoryRepo := ctx.Value("appTokenHistoryRepo").(repo.AppTokenHistoryRepository)
-			glog.Infoln(histories)
 			appTokenHistoryRepo.Create(histories)
 		}
 

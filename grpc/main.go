@@ -37,9 +37,6 @@ func Run(ctx context.Context, network, address string) error {
 	// Token 기반의 인증 처리
 	grpc_author.RegisterApiAuthServiceServer(s, newApiAuthServer(appTokenService))
 
-	// App 서비스 등록/수정/삭제 처리
-	grpc_author.RegisterAppTokenManagerServer(s, newAppTokenServer(appTokenService))
-
 	go func() {
 		defer s.GracefulStop()
 		<-ctx.Done()

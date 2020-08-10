@@ -1,8 +1,8 @@
 package repo
 
 import (
-	"github.com/jinzhu/gorm"
 	"gitlab.com/promptech1/infuser-author/model"
+	"xorm.io/xorm"
 )
 
 type AppRepository interface {
@@ -10,17 +10,17 @@ type AppRepository interface {
 }
 
 type appRepositoryDB struct {
-	DB *gorm.DB
+	DB *xorm.Engine
 }
 
-func NewAppRepository(db *gorm.DB) AppRepository {
+func NewAppRepository(db *xorm.Engine) AppRepository {
 	return &appRepositoryDB{DB: db}
 }
 
 func (r *appRepositoryDB) FindByNameSpace(nameSpace string) (*model.App, error) {
-	app := model.App{}
+	app := model.App{NameSpace: nameSpace}
 
-	if err := r.DB.Where("name_space = ?", nameSpace).First(&app).Error; gorm.IsRecordNotFoundError(err) {
+	if _, err := r.DB.Get(&app); err != nil {
 		return nil, err
 	}
 

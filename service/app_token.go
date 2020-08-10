@@ -43,7 +43,7 @@ func (s appTokenService) Regist(token string, nameSpace string) {
 		t = s.tokenRepo.Create(token)
 	}
 
-	s.repo.Create(app.ID, t.ID)
+	s.repo.Create(app.Id, t.Id)
 }
 
 func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_author.ApiAuthRes_Code{
@@ -63,9 +63,9 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_auth
 		}
 
 		// Redis에 저장하는 APP 정보는 ID와 최대 트래픽(delimiter를 ':' 로 사용)
-		s.redisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.ID, app.MaxTraffic))
-		appID = app.ID
-		maxTraffic = app.MaxTraffic
+		// TODO: s.redisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.ID, app.MaxTraffic))
+		appID = app.Id
+		// TODO: maxTraffic = app.MaxTraffic
 	} else {
 		glog.Infof("find app in redis: %s", appInfo)
 		appInfoStr := appInfo.(string)
@@ -85,18 +85,18 @@ func (s appTokenService) CheckAppToken(token string, nameSpace string) grpc_auth
 		if t, err = s.tokenRepo.FindByToken(token); err != nil {
 			return grpc_author.ApiAuthRes_UNAUTHORIZED
 		}
-		s.redisDB.Set(tKey, t.ID)
-		tokenID = t.ID
+		s.redisDB.Set(tKey, t.Id)
+		tokenID = t.Id
 	} else {
 		glog.Info("find token in redis: ", tokenIDStr)
 		tokenID = tokenIDStr.(uint)
 	}
 
-	// App-Token 정보 조회
-	appToken := s.repo.Find(appID, tokenID)
+	// TODO App-Token 정보 조회
+	appToken, _ := s.repo.Find(appID, tokenID)
 	if appToken != nil {
-		glog.Infof("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.ID, appID, tokenID)
-		trafficKey := fmt.Sprintf("traffic:%d", appToken.ID)
+		glog.Infof("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.Id, appID, tokenID)
+		trafficKey := fmt.Sprintf("traffic:%d", appToken.Id)
 
 		count, err := s.redisDB.Get(trafficKey, "uint")
 		if err != nil && err == redis.Nil {

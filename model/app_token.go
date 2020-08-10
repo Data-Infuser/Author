@@ -1,14 +1,15 @@
 package model
 
-import "github.com/jinzhu/gorm"
+import "time"
 
-// App - Token relationship 정의. 현재 모델에 대한 Migration 수행 이후 각 모델의 many-to-many 관계 정의 필요
+// App - Token relationship 정의.
 type AppToken struct {
-	gorm.Model
-	AppID uint
-	App App
-	TokenID uint
-	Token Token
+	Id uint `xorm:"pk;autoincr"`
+	AppId uint `xorm:"index"`
+	TokenId uint `xorm:"index"`
+	CreatedAt time.Time `xorm:"created"`
+	DeletedAt time.Time
 
-	Histories []AppTokenHistory
+	App App `xorm:"- extends"`
+	Token Token `xorm:"- extends"`
 }

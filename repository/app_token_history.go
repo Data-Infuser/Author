@@ -1,10 +1,8 @@
 package repo
 
 import (
-	"github.com/golang/glog"
-	"github.com/jinzhu/gorm"
-	gormbulk "github.com/t-tiger/gorm-bulk-insert/v2"
 	"gitlab.com/promptech1/infuser-author/model"
+	"xorm.io/xorm"
 )
 
 type AppTokenHistoryRepository interface {
@@ -12,10 +10,10 @@ type AppTokenHistoryRepository interface {
 }
 
 type appTokenHistoryRepositoryDB struct {
-	DB *gorm.DB
+	DB *xorm.Engine
 }
 
-func NewAppTokenHistoryRepository(db *gorm.DB) AppTokenHistoryRepository {
+func NewAppTokenHistoryRepository(db *xorm.Engine) AppTokenHistoryRepository {
 	return &appTokenHistoryRepositoryDB{DB: db}
 }
 
@@ -26,7 +24,8 @@ func (r appTokenHistoryRepositoryDB) Create(histories []model.AppTokenHistory) {
 		insertRecords = append(insertRecords, h)
 	}
 
-	if err := gormbulk.BulkInsert(r.DB, insertRecords, 3000); err != nil {
-		glog.Info(err)
-	}
+	// TODO
+	//if err := gormbulk.BulkInsert(r.DB, insertRecords, 3000); err != nil {
+	//	glog.Info(err)
+	//}
 }

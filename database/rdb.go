@@ -2,14 +2,15 @@ package database
 
 import (
 	"fmt"
-	"github.com/jinzhu/gorm"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/golang/glog"
 	"gitlab.com/promptech1/infuser-author/model"
 	"gopkg.in/yaml.v2"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
-	_ "github.com/go-sql-driver/mysql"
+	"xorm.io/xorm"
+	"xorm.io/xorm/log"
 )
 
 // DBConfig : Database Config
@@ -29,7 +30,7 @@ type DBEnvConfig struct {
 	Prod DBConfig `yaml:"prod"`
 }
 
-func ConnDB() *gorm.DB{
+func ConnDB() *xorm.Engine{
 	ballast := make([]byte, 10<<30)
 	_ = ballast
 
@@ -38,7 +39,7 @@ func ConnDB() *gorm.DB{
 	if err != nil {
 		panic(err.Error())
 	}
-	log.Printf("filename: %v", filename)
+	glog.Infof("filename: %v", filename)
 
 	var envConfig DBEnvConfig
 	var dbConfig DBConfig
@@ -48,33 +49,38 @@ func ConnDB() *gorm.DB{
 		panic(err.Error())
 	}
 
-	env := os.Getenv("MANAGER_ENV")
+	var isProd = false
+	env := os.Getenv("AUTHOR_ENV")
 	if len(env) == 0 || env != "prod"{
 		dbConfig = envConfig.Dev
 	} else {
 		dbConfig = envConfig.Prod
+		isProd = true
 	}
 
 	connectURL := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True",
 		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
 
-	db, err := gorm.Open(dbConfig.DBType, connectURL)
+	engine, err := xorm.NewEngine(dbConfig.DBType, connectURL)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	db.DB().SetMaxIdleConns(dbConfig.IdleConns)
-	db.DB().SetMaxOpenConns(dbConfig.MaxOpenConns)
+	if !isProd {
+		engine.ShowSQL(true)
+		engine.Logger().SetLevel(log.LOG_DEBUG)
+	}
 
-	migrate(db)
+	engine.SetMaxIdleConns(dbConfig.IdleConns)
+	engine.SetMaxOpenConns(dbConfig.MaxOpenConns)
 
-	return db
+	migrate(engine)
+
+	return engine
 }
 
-func migrate(db *gorm.DB) {
-	db.AutoMigrate(&model.AppToken{})
-	db.AutoMigrate(&model.Token{})
-	db.AutoMigrate(&model.User{})
-	db.AutoMigrate(&model.App{})
-	db.AutoMigrate(&model.AppTokenHistory{})
+func migrate(engine *xorm.Engine) {
+	engine.Sync2(new(model.App))
+	engine.Sync2(new(model.Token))
+	engine.Sync2(new(model.AppToken))
 }
