@@ -41,7 +41,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	go runCron(a.Ctx)
+	// 주기적 통계 데이터 저장 처리
+	// go runCron(a.Ctx)
 
 	a.Run(*network, *addr)
 

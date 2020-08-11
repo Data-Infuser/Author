@@ -12,10 +12,10 @@ import (
 type Token struct {
 	Id    uint   `xorm:"pk autoincr"`
 	Token string `xorm:"unique"`
-	IsDel bool   `xorm:default 0`
+	IsDel bool   `xorm:index default 0`
 
 	CreatedAt time.Time `xorm:"created"`
-	DeletedAt time.Time
+	DeletedAt *time.Time
 }
 
 func (t *Token) FindByToken(orm *xorm.Engine) error {

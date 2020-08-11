@@ -38,10 +38,11 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 		if err != nil {
 			return grpc_author.ApiAuthRes_UNREGISTERED_SERVICE
 		}
-		h.Ctx.RedisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.Id, app.MaxTraffic))
+		// TODO : MaxTraffic 설정 처리 필요
+		h.Ctx.RedisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.Id, 100))
 
 		appId = app.Id
-		maxTraffic = app.MaxTraffic
+		maxTraffic = 100 // TODO : MaxTraffic 설정 처리 필요
 	} else {
 		glog.Infof("find app in redis: %s", appInfo)
 		appInfoStr := appInfo

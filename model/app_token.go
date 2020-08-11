@@ -14,7 +14,6 @@ type AppToken struct {
 	AppId     uint      `xorm:"index"`
 	TokenId   uint      `xorm:"index"`
 	CreatedAt time.Time `xorm:"created"`
-	DeletedAt time.Time
 
 	App   App   `xorm:"- extends"`
 	Token Token `xorm:"- extends"`

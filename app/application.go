@@ -134,6 +134,12 @@ func (a *Application) migrateDB() error {
 	if err = a.Ctx.Orm.Sync2(new(model.AppTokenHistory)); err != nil {
 		return err
 	}
+	if err = a.Ctx.Orm.Sync2(new(model.Operation)); err != nil {
+		return err
+	}
+	if err = a.Ctx.Orm.Sync2(new(model.Traffic)); err != nil {
+		return err
+	}
 
 	return nil
 }
