@@ -1,17 +1,14 @@
 package ctx
 
 import (
-	"context"
-
-	"github.com/go-redis/redis/v8"
+	"gitlab.com/promptech1/infuser-author/database"
 	"xorm.io/xorm"
 )
 
 type Context struct {
-	Context             context.Context
 	Mode                string
 	Orm                 *xorm.Engine
-	RedisDB             *redis.Client
+	RedisDB             *database.RedisDB
 	DBConfig            *DBConfig
 	DBConfigFileName    string
 	RedisConfig         *RedisConfig

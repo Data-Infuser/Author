@@ -10,6 +10,7 @@ import (
 	"github.com/golang/glog"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
 	"gitlab.com/promptech1/infuser-author/constant"
+	"gitlab.com/promptech1/infuser-author/database"
 	server "gitlab.com/promptech1/infuser-author/grpc"
 	"gitlab.com/promptech1/infuser-author/model"
 	"gopkg.in/yaml.v2"
@@ -21,18 +22,18 @@ import (
 
 // Application define a mode of running app
 type Application struct {
-	Ctx    *ctx.Context
-	server *server.Server
+	Ctx     *ctx.Context
+	Context context.Context
+	server  *server.Server
 }
 
 // New constructor
-func New() (*Application, error) {
+func New(context context.Context) (*Application, error) {
 	var err error
 
 	a := new(Application)
 	a.Ctx = new(ctx.Context)
-
-	a.Ctx.Context = context.Background()
+	a.Context = context
 
 	env := os.Getenv("AUTHOR_ENV")
 	if len(env) == 0 || env != constant.SERVICE_PROD {
@@ -52,21 +53,14 @@ func New() (*Application, error) {
 		return nil, err
 	}
 
-	redisConfig := a.Ctx.RedisConfig
-	a.Ctx.RedisDB = redis.NewClient(&redis.Options{
-		Addr:         fmt.Sprintf("%s:%d", redisConfig.Addr, redisConfig.Port),
-		Password:     redisConfig.Password,
-		DB:           redisConfig.DB,
-		MinIdleConns: redisConfig.MinIdleConns,
-		PoolSize:     redisConfig.PoolSize,
-	})
+	a.initRedis(a.Context)
 
 	return a, nil
 }
 
 // Run starts application
 func (a *Application) Run(network, addr string) {
-	a.server = server.New(a.Ctx)
+	a.server = server.New(a.Ctx, a.Context)
 	a.server.Run(network, addr)
 }
 
@@ -142,4 +136,17 @@ func (a *Application) migrateDB() error {
 	}
 
 	return nil
+}
+
+func (a *Application) initRedis(context context.Context) {
+	redisConfig := a.Ctx.RedisConfig
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:         fmt.Sprintf("%s:%d", redisConfig.Addr, redisConfig.Port),
+		Password:     redisConfig.Password,
+		DB:           redisConfig.DB,
+		MinIdleConns: redisConfig.MinIdleConns,
+		PoolSize:     redisConfig.PoolSize,
+	})
+
+	a.Ctx.RedisDB = database.NewRedisDB(context, redisClient)
 }

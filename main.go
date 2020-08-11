@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -27,12 +28,14 @@ func main() {
 	flag.Parse()
 	defer glog.Flush()
 
+	ctx := context.Background()
+
 	var (
 		err error
 		a   *app.Application
 	)
 
-	a, err = app.New()
+	a, err = app.New(ctx)
 	if err != nil {
 		log.Fatal("error ", os.Args[0]+" initialization error: "+err.Error())
 		os.Exit(1)
@@ -48,14 +51,13 @@ func main() {
 func runCron(ctx *ctx.Context) {
 	c := cron.New()
 	c.AddFunc("* * * * *", func() {
-
-		_, err := ctx.RedisDB.LPop(ctx.Context, constant.REDIS_TRAFFIC_QUEUE).Result()
+		_, err := ctx.RedisDB.LPop(constant.REDIS_TRAFFIC_QUEUE)
 		if err != nil && err == redis.Nil {
 			fmt.Println("Ignore stat ======= ")
 			return
 		}
 
-		members, err := ctx.RedisDB.SMembers(ctx.Context, constant.REDIS_TRAFFIC_SET).Result()
+		members, err := ctx.RedisDB.SMembers(constant.REDIS_TRAFFIC_SET)
 		if err != nil && err == redis.Nil {
 			fmt.Println("no members ======= ")
 			return
@@ -64,22 +66,19 @@ func runCron(ctx *ctx.Context) {
 		var histories []model.AppTokenHistory
 
 		for _, appTokenKey := range members {
-			cntInfo, err := ctx.RedisDB.Get(ctx.Context, appTokenKey).Result()
+			cntInfo, err := ctx.RedisDB.Get(appTokenKey, "uint")
 			if err == nil {
-				temp, err := strconv.ParseUint(cntInfo, 10, 32)
-				if err == nil {
-					count := uint(temp)
-					if count > 0 {
-						ctx.RedisDB.Del(ctx.Context, appTokenKey).Result()
-						temp1 := strings.Split(appTokenKey, ":")[1]
-						temp, _ := strconv.Atoi(temp1)
-						appTokenId := uint(temp)
+				count := cntInfo.(uint)
+				if count > 0 {
+					ctx.RedisDB.Delete(appTokenKey)
+					temp1 := strings.Split(appTokenKey, ":")[1]
+					temp, _ := strconv.Atoi(temp1)
+					appTokenId := uint(temp)
 
-						histories = append(histories, model.AppTokenHistory{
-							AppTokenId:  appTokenId,
-							CallTraffic: count,
-						})
-					}
+					histories = append(histories, model.AppTokenHistory{
+						AppTokenId:  appTokenId,
+						CallTraffic: count,
+					})
 				}
 			}
 		}
@@ -88,7 +87,7 @@ func runCron(ctx *ctx.Context) {
 			ctx.Orm.Insert(&histories)
 		}
 
-		ctx.RedisDB.LPush(ctx.Context, constant.REDIS_TRAFFIC_QUEUE, "1").Result()
+		ctx.RedisDB.LPush(constant.REDIS_TRAFFIC_QUEUE, "1")
 
 		time.Sleep(10 * 1000 * time.Millisecond)
 		fmt.Println("Run Every min: ", time.Now().String())

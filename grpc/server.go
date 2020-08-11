@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"net"
 
 	"github.com/golang/glog"
@@ -15,13 +16,15 @@ import (
 // Server is an main application object that shared (read-only) to application modules
 type Server struct {
 	ctx        *ctx.Context
+	context    context.Context
 	grpcServer *grpc.Server
 }
 
 // New constructor
-func New(c *ctx.Context) *Server {
+func New(c *ctx.Context, context context.Context) *Server {
 	s := new(Server)
 	s.ctx = c
+	s.context = context
 	s.grpcServer = grpc.NewServer(
 		grpc.UnaryInterceptor(grpc_middleware.ChainUnaryServer(
 			grpc_recovery.UnaryServerInterceptor(),
@@ -44,7 +47,7 @@ func (s *Server) Run(network, address string) error {
 
 	go func() {
 		defer s.grpcServer.GracefulStop()
-		<-s.ctx.Context.Done()
+		<-s.context.Done()
 	}()
 
 	glog.Infof("start gRPC grpc at %s", address)

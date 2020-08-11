@@ -32,20 +32,20 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 	app := model.App{NameSpace: nameSpace}
 
 	nsKey := constant.REDIS_NS_KEY + nameSpace
-	appInfo, err := h.Ctx.RedisDB.Get(h.Ctx.Context, nsKey).Result()
+	appInfo, err := h.Ctx.RedisDB.Get(nsKey, "string")
 	if err != nil && err == redis.Nil {
 		err = app.FindByNameSpace(h.Ctx.Orm)
 		if err != nil {
 			return grpc_author.ApiAuthRes_UNREGISTERED_SERVICE
 		}
-		h.Ctx.RedisDB.Set(h.Ctx.Context, nsKey, fmt.Sprintf("%d:%d", app.Id, app.MaxTraffic), 0)
+		h.Ctx.RedisDB.Set(nsKey, fmt.Sprintf("%d:%d", app.Id, app.MaxTraffic))
 
 		appId = app.Id
 		maxTraffic = app.MaxTraffic
 	} else {
 		glog.Infof("find app in redis: %s", appInfo)
 		appInfoStr := appInfo
-		splits := strings.Split(appInfoStr, ":")
+		splits := strings.Split(appInfoStr.(string), ":")
 
 		appIDStr := splits[0]
 		temp, _ := strconv.Atoi(appIDStr)
@@ -57,20 +57,16 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 
 	token := model.Token{Token: tokenVal}
 	tokenKey := constant.REDIS_T_KEY + tokenVal
-	tokenInfo, err := h.Ctx.RedisDB.Get(h.Ctx.Context, tokenKey).Result()
+	tokenInfo, err := h.Ctx.RedisDB.Get(tokenKey, "uint")
 	if err != nil && err == redis.Nil {
 		if err = token.FindByToken(h.Ctx.Orm); err != nil {
 			return grpc_author.ApiAuthRes_UNAUTHORIZED
 		}
-		h.Ctx.RedisDB.Set(h.Ctx.Context, tokenKey, token.Id, 0)
+		h.Ctx.RedisDB.Set(tokenKey, token.Id)
 		tokenId = token.Id
 	} else {
 		glog.Infof("find token in redis: %s", tokenInfo)
-		temp, err := strconv.ParseUint(tokenInfo, 10, 32)
-		if err != nil {
-			return grpc_author.ApiAuthRes_INTERNAL_EXCEPTION
-		}
-		tokenId = uint(temp)
+		tokenId = tokenInfo.(uint)
 	}
 
 	appToken := model.AppToken{AppId: appId, TokenId: tokenId}
@@ -82,21 +78,17 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 	glog.Infof("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.Id, appId, tokenId)
 	var count uint
 	trafficKey := fmt.Sprintf("traffic:%d", appToken.Id)
-	countInfo, err := h.Ctx.RedisDB.Get(h.Ctx.Context, trafficKey).Result()
+	countInfo, err := h.Ctx.RedisDB.Get(trafficKey, "uint")
 	if err != nil && err == redis.Nil {
 		count = uint(0)
-		h.Ctx.RedisDB.SAdd(h.Ctx.Context, constant.REDIS_TRAFFIC_SET, trafficKey).Result()
+		h.Ctx.RedisDB.SAdd(constant.REDIS_TRAFFIC_SET, trafficKey)
 	} else {
-		temp, err := strconv.ParseUint(countInfo, 10, 32)
-		if err != nil {
-			return grpc_author.ApiAuthRes_INTERNAL_EXCEPTION
-		}
-		count = uint(temp)
+		count = countInfo.(uint)
 	}
 
 	if maxTraffic >= count {
 		// 인증키 활용횟수 Increment. 통계 저장은 별도 처리
-		h.Ctx.RedisDB.Incr(h.Ctx.Context, trafficKey).Result()
+		h.Ctx.RedisDB.Incr(trafficKey)
 		return grpc_author.ApiAuthRes_VALID
 	}
 
