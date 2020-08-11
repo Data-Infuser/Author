@@ -10,14 +10,14 @@ import (
 
 // App Api 서비스 관리 모델
 type App struct {
-	Id        uint      `xorm:"pk"`
-	NameSpace string    `xorm:"unique"`
-	IsDel     bool      `xorm:index default 0`
-	CreatedAt time.Time `xorm:"created"`
-	UpdatedAt time.Time `xorm:"updated"`
-	DeletedAt *time.Time
-
-	Traffics []Traffic `xorm:"- extends"`
+	Id         uint      `xorm:"pk"`
+	NameSpace  string    `xorm:"unique"`
+	IsDel      bool      `xorm:index default 0`
+	CreatedAt  time.Time `xorm:"created"`
+	UpdatedAt  time.Time `xorm:"updated"`
+	DeletedAt  *time.Time
+	Operations []Operation `xorm:"- extends"`
+	Traffics   []Traffic   `xorm:"- extends"`
 }
 
 func (a *App) FindByNameSpace(orm *xorm.Engine) error {
