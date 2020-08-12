@@ -14,9 +14,10 @@ type Operation struct {
 	AppId     uint `xorm:"index"`
 	EndPoint  string
 	IsDel     bool      `xorm:index default 0`
+	Version   int       `xorm:"version"`
 	CreatedAt time.Time `xorm:"created"`
 	UpdatedAt time.Time `xorm:"updated"`
-	DeletedAt *time.Time
+	DeletedAt time.Time `xorm:"deleted index"`
 
 	App App `xorm:"- extends"`
 }
@@ -40,4 +41,32 @@ func (o *Operation) FindByEndPoint(orm *xorm.Engine) error {
 	}
 
 	return nil
+}
+
+func (o *Operation) Update(orm *xorm.Engine) error {
+	if _, err := orm.ID(o.Id).Update(o); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (o *Operation) Delete(orm *xorm.Engine) error {
+	if _, err := orm.ID(o.Id).Delete(o); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func FindOperationsByApp(orm *xorm.Engine, appId uint) ([]Operation, error) {
+	operations := []Operation{}
+
+	err := orm.Where("app_id = ?", appId).Find(&operations)
+
+	if err != nil {
+		return nil, errors.New("database error; " + err.Error())
+	}
+
+	return operations, nil
 }

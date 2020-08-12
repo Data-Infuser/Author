@@ -31,3 +31,11 @@ func FindTrafficsByApp(orm *xorm.Engine, appId uint) ([]Traffic, error) {
 
 	return traffics, nil
 }
+
+func (t *Traffic) Delete(orm *xorm.Engine) error {
+	if _, err := orm.ID(t.Id).Delete(t); err != nil {
+		return err
+	}
+
+	return nil
+}

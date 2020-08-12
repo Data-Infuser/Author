@@ -13,6 +13,7 @@ require (
 	github.com/jinzhu/gorm v1.9.15
 	github.com/robfig/cron/v3 v3.0.0 // indirect
 	github.com/sirupsen/logrus v1.4.2
+	github.com/thoas/go-funk v0.7.0
 	golang.org/x/net v0.0.0-20200707034311-ab3426394381 // indirect
 	golang.org/x/sys v0.0.0-20200728102440-3e129f6d46b1 // indirect
 	golang.org/x/text v0.3.3 // indirect
