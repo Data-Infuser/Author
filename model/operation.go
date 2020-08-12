@@ -13,3 +13,7 @@ type Operation struct {
 
 	App App `xorm:"- extends"`
 }
+
+func (Operation) TableName() string {
+	return "operation"
+}

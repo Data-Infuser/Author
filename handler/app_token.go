@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/golang/glog"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
 	"gitlab.com/promptech1/infuser-author/constant"
 	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
@@ -23,11 +22,30 @@ func NewAppTokenHandler(ctx *ctx.Context) *AppTokenHandler {
 	}
 }
 
-func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_author.ApiAuthRes_Code {
-	glog.Info("CheckAppToken: ", tokenVal, nameSpace)
+func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string, operationUrl string) grpc_author.ApiAuthRes_Code {
+	h.Ctx.Logger.Debug("CheckAppToken: ", tokenVal, nameSpace)
 	var appId uint
 	var tokenId uint
 	var maxTraffic uint
+
+	var operation model.Operation
+	operation = model.Operation{
+		EndPoint: operationUrl,
+	}
+
+	h.Ctx.Logger.Debug(operationUrl)
+
+	h.Ctx.Orm.Table(operation.TableName()).
+		Join(
+			"INNER", operation.App.TableName(),
+			"operation.app_id = app.id",
+		).
+		Where("app.name_space = ?", nameSpace).
+		Get(&operation)
+
+	h.Ctx.Logger.WithField(
+		"operation", fmt.Sprintf("%+v", operation),
+	).Debug("operation join result")
 
 	app := model.App{NameSpace: nameSpace}
 
@@ -44,7 +62,7 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 		appId = app.Id
 		maxTraffic = 100 // TODO : MaxTraffic 설정 처리 필요
 	} else {
-		glog.Infof("find app in redis: %s", appInfo)
+		h.Ctx.Logger.Debug("find app in redis: ", appInfo)
 		appInfoStr := appInfo
 		splits := strings.Split(appInfoStr.(string), ":")
 
@@ -66,7 +84,7 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 		h.Ctx.RedisDB.Set(tokenKey, token.Id)
 		tokenId = token.Id
 	} else {
-		glog.Infof("find token in redis: %s", tokenInfo)
+		h.Ctx.Logger.Debug("find token in redis: ", tokenInfo)
 		tokenId = tokenInfo.(uint)
 	}
 
@@ -76,7 +94,7 @@ func (h *AppTokenHandler) CheckAppToken(tokenVal string, nameSpace string) grpc_
 		return grpc_author.ApiAuthRes_UNAUTHORIZED
 	}
 
-	glog.Infof("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.Id, appId, tokenId)
+	h.Ctx.Logger.Debug(fmt.Sprintf("AppToken ID: %d (appId: %d, tokenId: %d)", appToken.Id, appId, tokenId))
 	var count uint
 	trafficKey := fmt.Sprintf("traffic:%d", appToken.Id)
 	countInfo, err := h.Ctx.RedisDB.Get(trafficKey, "uint")

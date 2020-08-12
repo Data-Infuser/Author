@@ -11,7 +11,7 @@ type apiAuthServer struct {
 }
 
 func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (*grpc_author.ApiAuthRes, error) {
-	authCode := a.handler.CheckAppToken(req.Token, req.NameSpace)
+	authCode := a.handler.CheckAppToken(req.Token, req.NameSpace, req.OperationUrl)
 
 	res := &grpc_author.ApiAuthRes{
 		Code: authCode,

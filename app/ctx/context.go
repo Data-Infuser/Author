@@ -1,18 +1,37 @@
 package ctx
 
 import (
+	log "github.com/sirupsen/logrus"
 	"gitlab.com/promptech1/infuser-author/database"
 	"xorm.io/xorm"
 )
 
 type Context struct {
 	Mode                string
+	Logger              *log.Entry
 	Orm                 *xorm.Engine
 	RedisDB             *database.RedisDB
+	Config              *Config
 	DBConfig            *DBConfig
 	DBConfigFileName    string
 	RedisConfig         *RedisConfig
 	RedisConfigFileName string
+}
+
+type Config struct {
+	ServerConfig ServerConfig `yaml:"server"`
+	LoggerConfig LoggerConfig `yaml:"logger"`
+}
+
+type ServerConfig struct {
+	Port int `yaml:"port"`
+}
+
+type LoggerConfig struct {
+	Mode     string `yaml:"mode"`
+	Tag      string `yaml:"tag"`
+	FileName string `yaml:"fileName"`
+	Id       string
 }
 
 // DBConfig : Database Config

@@ -7,7 +7,7 @@ import (
 	"os"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/golang/glog"
+	"github.com/sirupsen/logrus"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
 	"gitlab.com/promptech1/infuser-author/constant"
 	"gitlab.com/promptech1/infuser-author/database"
@@ -49,6 +49,10 @@ func New(context context.Context) (*Application, error) {
 		return nil, err
 	}
 
+	if err = a.initLogger(); err != nil {
+		return nil, err
+	}
+
 	if err = a.initDB(); err != nil {
 		return nil, err
 	}
@@ -71,16 +75,20 @@ func (a *Application) initConfig() error {
 	ballast := make([]byte, 10<<30)
 	_ = ballast
 
+	if file, err = ioutil.ReadFile("config/config.yaml"); err != nil {
+		return err
+	}
+	if err = yaml.Unmarshal(file, &a.Ctx.Config); err != nil {
+		return err
+	}
+
 	// Load DB Config
-	glog.Info("Load DB Config ==============================")
-	glog.Info(a.Ctx.DBConfigFileName)
 	if file, err = ioutil.ReadFile(a.Ctx.DBConfigFileName); err != nil {
 		return err
 	}
 	if err = yaml.Unmarshal(file, &a.Ctx.DBConfig); err != nil {
 		return err
 	}
-	glog.Info(a.Ctx.DBConfig)
 
 	// Load Redis Config
 	if file, err = ioutil.ReadFile(a.Ctx.RedisConfigFileName); err != nil {
@@ -97,11 +105,11 @@ func (a *Application) initDB() error {
 	var err error
 
 	dbConfig := a.Ctx.DBConfig
-	glog.Info("DB Config ==========================================")
-	glog.Info(dbConfig)
+	a.Ctx.Logger.Info("DB Config ==========================================")
+	a.Ctx.Logger.Info(dbConfig)
 	connectURL := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8&parseTime=True",
 		dbConfig.User, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.DBName)
-	glog.Info(connectURL)
+	a.Ctx.Logger.Info(connectURL)
 
 	if a.Ctx.Orm, err = xorm.NewEngine(dbConfig.DBType, connectURL); err != nil {
 		return err
@@ -155,4 +163,33 @@ func (a *Application) initRedis(context context.Context) {
 	})
 
 	a.Ctx.RedisDB = database.NewRedisDB(context, redisClient)
+}
+
+func (a *Application) initLogger() error {
+	logger := logrus.New()
+
+	if _, err := os.Stat("log"); os.IsNotExist(err) {
+		os.Mkdir("log", 0777)
+	}
+
+	dir, _ := os.Getwd()
+	fmt.Println("CWD:", dir)
+
+	if a.Ctx.Mode == constant.SERVICE_DEV {
+		logger.SetLevel(logrus.DebugLevel)
+		logger.SetFormatter(&logrus.JSONFormatter{})
+		logger.Out = os.Stdout
+	} else {
+		logger.SetLevel(logrus.InfoLevel)
+		//log
+		file, _ := os.OpenFile(a.Ctx.Config.LoggerConfig.FileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+		logger.Out = file
+	}
+
+	a.Ctx.Logger = logger.WithFields(logrus.Fields{
+		"tag": a.Ctx.Config.LoggerConfig.Tag,
+		"id":  os.Getpid(),
+	})
+
+	return nil
 }

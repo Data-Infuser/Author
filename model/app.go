@@ -20,6 +20,10 @@ type App struct {
 	Traffics   []Traffic   `xorm:"- extends"`
 }
 
+func (App) TableName() string {
+	return "app"
+}
+
 func (a *App) FindByNameSpace(orm *xorm.Engine) error {
 	found, err := orm.Get(a)
 	if err != nil {

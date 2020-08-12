@@ -1,5 +1,6 @@
 infuser-protobuf
 
+
 config/config.yaml
 
 config/dev/database.yaml
@@ -7,6 +8,8 @@ config/prod/database.yaml
 
 config/dev/redis.yaml
 config/prod/redis.yaml
+
+*.log
 
 .DS_Store
 .idea

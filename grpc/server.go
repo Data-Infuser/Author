@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/golang/glog"
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	grpc_recovery "github.com/grpc-ecosystem/go-grpc-middleware/recovery"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
@@ -53,7 +52,7 @@ func (s *Server) Run(network, address string) error {
 		<-s.context.Done()
 	}()
 
-	glog.Infof("start gRPC grpc at %s", address)
+	s.ctx.Logger.Info("start gRPC grpc at ", address)
 	return s.grpcServer.Serve(l)
 
 }

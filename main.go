@@ -4,15 +4,14 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/golang/glog"
 	"github.com/robfig/cron/v3"
+	log "github.com/sirupsen/logrus"
 	"gitlab.com/promptech1/infuser-author/app"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
 	"gitlab.com/promptech1/infuser-author/constant"
@@ -20,15 +19,18 @@ import (
 )
 
 var (
-	addr    = flag.String("addr", ":9090", "endpoint of the gRPC grpc")
 	network = flag.String("network", "tcp", `one of "tcp" or "unix". Must be consistent to -endpoint`)
 )
 
 func main() {
 	flag.Parse()
-	defer glog.Flush()
 
 	ctx := context.Background()
+
+	// Output to stdout instead of the default stderr
+	// Can be any io.Writer, see below for File example
+
+	// Only log the warning severity or above.
 
 	var (
 		err error
@@ -44,9 +46,7 @@ func main() {
 	// 주기적 통계 데이터 저장 처리
 	// go runCron(a.Ctx)
 
-	a.Run(*network, *addr)
-
-	glog.Info("Run Grpc Service =======")
+	a.Run(*network, fmt.Sprintf(":%d", a.Ctx.Config.ServerConfig.Port))
 }
 
 func runCron(ctx *ctx.Context) {

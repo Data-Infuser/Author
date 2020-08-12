@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/golang/glog"
+	log "github.com/sirupsen/logrus"
 )
 
 type RedisDB struct {
@@ -36,7 +36,9 @@ func (r *RedisDB) Get(key string, resultType string) (interface{}, error) {
 	case "uint":
 		temp, err := strconv.ParseUint(result, 10, 32)
 		if err != nil {
-			glog.Fatal(err)
+			log.WithFields(log.Fields{
+				"module": "redis",
+			}).Fatal(err)
 			return temp, err
 		}
 		return uint(temp), nil
