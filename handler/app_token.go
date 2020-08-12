@@ -80,7 +80,8 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 			return grpc_author.ApiAuthRes_UNAUTHORIZED
 		}
 		h.Ctx.Logger.WithField("DB", fmt.Sprintf("%+v", appToken)).Debug("Find AppToken")
-		h.Ctx.RedisDB.Set(appTokenKey, appToken.Id)
+		// App-Token 정보는 24시간 유지
+		h.Ctx.RedisDB.SetWithExpiration(appTokenKey, appToken.Id, 60*60*24)
 	} else {
 		h.Ctx.Logger.WithField("Redis", tokenId).Debug("Find AppToken")
 		appToken.Id = appTokenId.(uint)
