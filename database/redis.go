@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	log "github.com/sirupsen/logrus"
@@ -26,10 +27,15 @@ func (r *RedisDB) Set(key string, value interface{}) (string, error) {
 	return key, err
 }
 
+func (r *RedisDB) SetWithExpiration(key string, value interface{}, expiration time.Duration) (string, error) {
+	_, err := r.client.Set(r.context, key, value, expiration).Result()
+	return key, err
+}
+
 func (r *RedisDB) Get(key string, resultType string) (interface{}, error) {
 	result, err := r.client.Get(r.context, key).Result()
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 
 	switch resultType {

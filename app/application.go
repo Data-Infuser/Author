@@ -36,10 +36,10 @@ func New(context context.Context) (*Application, error) {
 	a.Context = context
 
 	env := os.Getenv("AUTHOR_ENV")
-	if len(env) == 0 || env != constant.SERVICE_PROD {
-		a.Ctx.Mode = constant.SERVICE_DEV
+	if len(env) == 0 || env != constant.ServiceProd {
+		a.Ctx.Mode = constant.ServiceDev
 	} else {
-		a.Ctx.Mode = constant.SERVICE_PROD
+		a.Ctx.Mode = constant.ServiceProd
 	}
 
 	a.Ctx.DBConfigFileName = fmt.Sprintf("config/%s/database.yaml", a.Ctx.Mode)
@@ -115,7 +115,7 @@ func (a *Application) initDB() error {
 		return err
 	}
 
-	if a.Ctx.Mode == constant.SERVICE_DEV {
+	if a.Ctx.Mode == constant.ServiceDev {
 		a.Ctx.Orm.ShowSQL(true)
 		a.Ctx.Orm.Logger().SetLevel(log.LOG_DEBUG)
 	}
@@ -175,9 +175,9 @@ func (a *Application) initLogger() error {
 	dir, _ := os.Getwd()
 	fmt.Println("CWD:", dir)
 
-	if a.Ctx.Mode == constant.SERVICE_DEV {
+	if a.Ctx.Mode == constant.ServiceDev {
 		logger.SetLevel(logrus.DebugLevel)
-		logger.SetFormatter(&logrus.JSONFormatter{})
+		// logger.SetFormatter(&logrus.JSONFormatter{})
 		logger.Out = os.Stdout
 	} else {
 		logger.SetLevel(logrus.InfoLevel)

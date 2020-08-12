@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/promptech1/infuser-author/constant"
 	errors "gitlab.com/promptech1/infuser-author/error"
 	"xorm.io/xorm"
 )
@@ -16,6 +17,10 @@ type Token struct {
 
 	CreatedAt time.Time `xorm:"created"`
 	DeletedAt *time.Time
+}
+
+func (t *Token) KeyName() string {
+	return constant.KeyToken + t.Token
 }
 
 func (t *Token) FindByToken(orm *xorm.Engine) error {

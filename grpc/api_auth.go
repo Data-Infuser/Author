@@ -4,6 +4,7 @@ import (
 	"context"
 	"gitlab.com/promptech1/infuser-author/handler"
 	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
+	"gitlab.com/promptech1/infuser-author/model"
 )
 
 type apiAuthServer struct {
@@ -11,7 +12,13 @@ type apiAuthServer struct {
 }
 
 func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (*grpc_author.ApiAuthRes, error) {
-	authCode := a.handler.CheckAppToken(req.Token, req.NameSpace, req.OperationUrl)
+	token := model.Token{Token: req.Token, IsDel: false}
+	operation := model.Operation{
+		EndPoint: req.OperationUrl, IsDel: false,
+		App: model.App{NameSpace: req.NameSpace, IsDel: false},
+	}
+
+	authCode := a.handler.CheckAppToken(&token, &operation)
 
 	res := &grpc_author.ApiAuthRes{
 		Code: authCode,

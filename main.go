@@ -52,13 +52,13 @@ func main() {
 func runCron(ctx *ctx.Context) {
 	c := cron.New()
 	c.AddFunc("* * * * *", func() {
-		_, err := ctx.RedisDB.LPop(constant.REDIS_TRAFFIC_QUEUE)
+		_, err := ctx.RedisDB.LPop(constant.KEY_TRAFFIC_QUEUE)
 		if err != nil && err == redis.Nil {
 			fmt.Println("Ignore stat ======= ")
 			return
 		}
 
-		members, err := ctx.RedisDB.SMembers(constant.REDIS_TRAFFIC_SET)
+		members, err := ctx.RedisDB.SMembers(constant.KEY_TRAFFIC_SET)
 		if err != nil && err == redis.Nil {
 			fmt.Println("no members ======= ")
 			return
@@ -88,7 +88,7 @@ func runCron(ctx *ctx.Context) {
 			ctx.Orm.Insert(&histories)
 		}
 
-		ctx.RedisDB.LPush(constant.REDIS_TRAFFIC_QUEUE, "1")
+		ctx.RedisDB.LPush(constant.KEY_TRAFFIC_QUEUE, "1")
 
 		time.Sleep(10 * 1000 * time.Millisecond)
 		fmt.Println("Run Every min: ", time.Now().String())

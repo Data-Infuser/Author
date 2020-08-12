@@ -1,6 +1,11 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	errors "gitlab.com/promptech1/infuser-author/error"
+	"xorm.io/xorm"
+)
 
 type Traffic struct {
 	Id        uint   `xorm:"pk autoincr"`
@@ -13,4 +18,16 @@ type Traffic struct {
 	DeletedAt *time.Time
 
 	App App `xorm:"- extends"`
+}
+
+func FindTrafficsByApp(orm *xorm.Engine, appId uint) ([]Traffic, error) {
+	traffics := []Traffic{}
+
+	err := orm.Where("app_id = ?", appId).Find(&traffics)
+
+	if err != nil {
+		return nil, errors.New("database error; " + err.Error())
+	}
+
+	return traffics, nil
 }

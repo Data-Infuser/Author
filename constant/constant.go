@@ -1,12 +1,19 @@
 package constant
 
-const SERVICE_DEV = "dev"
-const SERVICE_PROD = "prod"
+const ServiceDev = "dev"
+const ServiceProd = "prod"
 
-const DB = "db"
-const REDIS_DB = "redisDB"
+const KeyApp = "App:"
+const KeyToken = "Token:"
+const KeyOperation = "Op:"
+const KeyAuth = "Auth:"
+const KeyAppTrafficPrefix = "AppTf:"
+const KeyTrafficPrefix = "Tf:"
+const KEY_TRAFFIC_SET = "TrafficSet:"
+const KEY_TRAFFIC_QUEUE = "TrafficQueue"
 
-const REDIS_NS_KEY = "ns:" // App NameSpace Prefix
-const REDIS_T_KEY = "t:"   // Token NameSpace Prefix
-const REDIS_TRAFFIC_SET = "usage-set"
-const REDIS_TRAFFIC_QUEUE = "tq"
+func GetTrafficUnits() []string {
+	return []string{
+		"hour", "day", "month",
+	}
+}

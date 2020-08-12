@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"gitlab.com/promptech1/infuser-author/constant"
 	errors "gitlab.com/promptech1/infuser-author/error"
 	"xorm.io/xorm"
 )
@@ -22,6 +23,10 @@ type App struct {
 
 func (App) TableName() string {
 	return "app"
+}
+
+func (a *App) KeyName() string {
+	return constant.KeyApp + a.NameSpace
 }
 
 func (a *App) FindByNameSpace(orm *xorm.Engine) error {
