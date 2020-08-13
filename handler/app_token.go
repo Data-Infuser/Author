@@ -28,7 +28,7 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 	appKey := operation.App.KeyName()
 	appId, err := h.Ctx.RedisDB.Get(appKey, "uint")
 	if err != nil && err == redis.Nil {
-		err = operation.App.FindByNameSpace(h.Ctx.Orm)
+		err = operation.App.FindApp(h.Ctx.Orm)
 		if err != nil {
 			return grpc_author.ApiAuthRes_UNREGISTERED_SERVICE
 		}
@@ -44,12 +44,12 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 	opKey := operation.KeyName()
 	opId, err := h.Ctx.RedisDB.Get(opKey, "uint")
 	if err != nil && err == redis.Nil {
-		err = operation.FindByEndPoint(h.Ctx.Orm)
+		err = operation.FindOperation(h.Ctx.Orm)
 		if err != nil {
 			return grpc_author.ApiAuthRes_UNREGISTERED_SERVICE
 		}
 		h.Ctx.Logger.WithField("DB", fmt.Sprintf("%+v", operation)).Debug("Find Operation")
-		h.Ctx.RedisDB.Set(opKey, operation.Id)
+		operation.SetRedis(h.Ctx.RedisDB)
 	} else {
 		h.Ctx.Logger.WithField("Redis", opId).Debug("Find Operation")
 		operation.Id = opId.(uint)
@@ -91,7 +91,8 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 	var finded = false
 	var trafficMap = map[string]uint{}
 	for _, unit := range constant.GetTrafficUnits() {
-		key := fmt.Sprintf("%s%d:%s", constant.KeyAppTrafficPrefix, operation.AppId, unit)
+		t := model.Traffic{Unit: unit, AppId: operation.AppId}
+		key := t.KeyName()
 		trafficVal, err := h.Ctx.RedisDB.Get(key, "uint")
 		if err == nil {
 			finded = true
@@ -107,7 +108,7 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 		}
 
 		for _, traffic := range traffics {
-			key := fmt.Sprintf("%s%d:%s", constant.KeyAppTrafficPrefix, operation.AppId, traffic.Unit)
+			key := traffic.KeyName()
 			h.Ctx.RedisDB.Set(key, traffic.Val)
 			trafficMap[key] = traffic.Val
 		}
@@ -117,7 +118,8 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 	var isValid = true
 	for _, unit := range constant.GetTrafficUnits() {
 		var tokenTraffic uint
-		appTrafficKey := fmt.Sprintf("%s%d:%s", constant.KeyAppTrafficPrefix, operation.AppId, unit)
+		t := model.Traffic{Unit: unit, AppId: operation.AppId}
+		appTrafficKey := t.KeyName()
 
 		if maxTraffic, ok := trafficMap[appTrafficKey]; ok {
 			h.Ctx.Logger.WithFields(logrus.Fields{

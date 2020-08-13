@@ -1,8 +1,11 @@
 package model
 
 import (
+	"fmt"
 	"time"
 
+	"gitlab.com/promptech1/infuser-author/constant"
+	"gitlab.com/promptech1/infuser-author/database"
 	errors "gitlab.com/promptech1/infuser-author/error"
 	"xorm.io/xorm"
 )
@@ -18,6 +21,10 @@ type Traffic struct {
 	DeletedAt *time.Time
 
 	App App `xorm:"- extends"`
+}
+
+func (t *Traffic) KeyName() string {
+	return fmt.Sprintf("%s%d:%s", constant.KeyAppTrafficPrefix, t.AppId, t.Unit)
 }
 
 func FindTrafficsByApp(orm *xorm.Engine, appId uint) ([]Traffic, error) {
@@ -38,4 +45,8 @@ func (t *Traffic) Delete(orm *xorm.Engine) error {
 	}
 
 	return nil
+}
+
+func (t *Traffic) DelRedis(rdb *database.RedisDB) {
+	rdb.Delete(t.KeyName())
 }

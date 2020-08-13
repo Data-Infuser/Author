@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gitlab.com/promptech1/infuser-author/constant"
+	"gitlab.com/promptech1/infuser-author/database"
 	errors "gitlab.com/promptech1/infuser-author/error"
 	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
 	"xorm.io/xorm"
@@ -32,8 +33,9 @@ func (a *App) KeyName() string {
 	return constant.KeyApp + a.NameSpace
 }
 
-func (a *App) FindByNameSpace(orm *xorm.Engine) error {
+func (a *App) FindApp(orm *xorm.Engine) error {
 	found, err := orm.Get(a)
+
 	if err != nil {
 		return errors.NewWithPrefix(err, "database error")
 	}
@@ -52,6 +54,10 @@ func (a *App) Delete(orm *xorm.Engine) error {
 	}
 
 	return nil
+}
+
+func (a *App) DelRedis(rdb *database.RedisDB) {
+	rdb.Delete(a.KeyName())
 }
 
 func NewAppByGrpc(req *grpc_author.AppReq) *App {

@@ -55,6 +55,7 @@ func (h *AppHandler) Update(app *model.App) error {
 	var originIds []uint
 	for _, operation := range originOperations {
 		originIds = append(originIds, operation.Id)
+		operation.DelRedis(h.Ctx.RedisDB) // 수정이 발생할 수 있는 operation에 대한 redis 삭제 처리
 	}
 
 	var newIds []uint
@@ -104,6 +105,7 @@ func (h *AppHandler) Update(app *model.App) error {
 	traffics, err := model.FindTrafficsByApp(h.Ctx.Orm, app.Id)
 	h.Ctx.Logger.Debug(traffics)
 	for _, traffic := range traffics {
+		traffic.DelRedis(h.Ctx.RedisDB)
 		err := traffic.Delete(h.Ctx.Orm)
 		if err != nil {
 			session.Rollback()
@@ -125,22 +127,49 @@ func (h *AppHandler) Destroy(appId uint) error {
 	session := h.Ctx.Orm.NewSession()
 	session.Begin()
 
-	// Operation 삭제 처리
+	// 1. Operation 삭제 처리
+	var operations []model.Operation
+	if err := h.Ctx.Orm.Where("app_id = ?", appId).Find(&operations); err != nil {
+		session.Rollback()
+		return err
+	}
+	// 1-1. DB 삭제 처리
 	operationSql := "UPDATE operation SET deleted_at = ? WHERE app_id = ? AND deleted_at IS NULL"
 	if _, err := h.Ctx.Orm.Exec(operationSql, time.Now(), appId); err != nil {
 		session.Rollback()
 		return err
 	}
+	// 1-2. Redis 삭제 처리
+	for _, operation := range operations {
+		operation.DelRedis(h.Ctx.RedisDB)
+	}
 
-	// Traffic 삭제 처리
+	// 2. Traffic 삭제 처리
+	var traffics []model.Traffic
+	if err := h.Ctx.Orm.Where("app_id = ?", appId).Find(&traffics); err != nil {
+		session.Rollback()
+		return err
+	}
+	// 2-1. DB 삭제 처리
 	trafficSql := "DELETE FROM traffic WHERE app_id = ?"
 	if _, err := h.Ctx.Orm.Exec(trafficSql, appId); err != nil {
 		session.Rollback()
 		return err
 	}
 
+	// 2-2. Redis 삭제 처리
+	for _, traffic := range traffics {
+		traffic.DelRedis(h.Ctx.RedisDB)
+	}
+
 	app := &model.App{Id: appId}
-	h.Ctx.Logger.Debug(app.Version)
+
+	if err := app.FindApp(h.Ctx.Orm); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	app.DelRedis(h.Ctx.RedisDB)
 	app.Delete(h.Ctx.Orm)
 
 	session.Commit()

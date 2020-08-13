@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"gitlab.com/promptech1/infuser-author/constant"
+	"gitlab.com/promptech1/infuser-author/database"
 	errors "gitlab.com/promptech1/infuser-author/error"
 	"xorm.io/xorm"
 )
@@ -30,7 +31,7 @@ func (o *Operation) KeyName() string {
 	return constant.KeyOperation + o.EndPoint
 }
 
-func (o *Operation) FindByEndPoint(orm *xorm.Engine) error {
+func (o *Operation) FindOperation(orm *xorm.Engine) error {
 	found, err := orm.Get(o)
 	if err != nil {
 		return errors.NewWithPrefix(err, "database error")
@@ -41,6 +42,14 @@ func (o *Operation) FindByEndPoint(orm *xorm.Engine) error {
 	}
 
 	return nil
+}
+
+func (o *Operation) SetRedis(rdb *database.RedisDB) {
+	rdb.Set(o.KeyName(), o.Id)
+}
+
+func (o *Operation) DelRedis(rdb *database.RedisDB) {
+	rdb.Delete(o.KeyName())
 }
 
 func (o *Operation) Update(orm *xorm.Engine) error {
