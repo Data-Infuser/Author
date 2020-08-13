@@ -45,6 +45,15 @@ func (a *App) FindByNameSpace(orm *xorm.Engine) error {
 	return nil
 }
 
+func (a *App) Delete(orm *xorm.Engine) error {
+	sql := "UPDATE app SET deleted_at = ? WHERE id = ?"
+	if _, err := orm.Exec(sql, time.Now(), a.Id); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func NewAppByGrpc(req *grpc_author.AppReq) *App {
 	app := &App{}
 	app.Id = uint(req.AppId)

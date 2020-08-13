@@ -52,7 +52,8 @@ func (o *Operation) Update(orm *xorm.Engine) error {
 }
 
 func (o *Operation) Delete(orm *xorm.Engine) error {
-	if _, err := orm.ID(o.Id).Delete(o); err != nil {
+	sql := "UPDATE operation SET deleted_at = ? WHERE id = ?"
+	if _, err := orm.Exec(sql, time.Now(), o.Id); err != nil {
 		return err
 	}
 

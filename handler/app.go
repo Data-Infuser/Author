@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"time"
+
 	"github.com/thoas/go-funk"
 	"gitlab.com/promptech1/infuser-author/app/ctx"
 	"gitlab.com/promptech1/infuser-author/model"
@@ -63,12 +65,8 @@ func (h *AppHandler) Update(app *model.App) error {
 	//기존 데이터와 공통되는(Update 대상) ID 추출
 	updatedIds := funk.Join(originIds, newIds, funk.InnerJoin)
 	for _, id := range updatedIds.([]uint) {
-		originIdx := funk.IndexOf(originIds, id)
-		originOperation := originOperations[originIdx]
-
 		idx := funk.IndexOf(newIds, id)
 		operation := app.Operations[idx]
-		operation.Version = originOperation.Version
 
 		err := operation.Update(h.Ctx.Orm)
 		if err != nil {
@@ -117,6 +115,33 @@ func (h *AppHandler) Update(app *model.App) error {
 		session.Rollback()
 		return err
 	}
+
+	session.Commit()
+
+	return nil
+}
+
+func (h *AppHandler) Destroy(appId uint) error {
+	session := h.Ctx.Orm.NewSession()
+	session.Begin()
+
+	// Operation 삭제 처리
+	operationSql := "UPDATE operation SET deleted_at = ? WHERE app_id = ? AND deleted_at IS NULL"
+	if _, err := h.Ctx.Orm.Exec(operationSql, time.Now(), appId); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	// Traffic 삭제 처리
+	trafficSql := "DELETE FROM traffic WHERE app_id = ?"
+	if _, err := h.Ctx.Orm.Exec(trafficSql, appId); err != nil {
+		session.Rollback()
+		return err
+	}
+
+	app := &model.App{Id: appId}
+	h.Ctx.Logger.Debug(app.Version)
+	app.Delete(h.Ctx.Orm)
 
 	session.Commit()
 
