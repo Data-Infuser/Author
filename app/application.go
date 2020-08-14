@@ -148,6 +148,21 @@ func (a *Application) migrateDB() error {
 	if err = a.Ctx.Orm.Sync2(new(model.Traffic)); err != nil {
 		return err
 	}
+	if err = a.Ctx.Orm.Sync2(new(model.Group)); err != nil {
+		return err
+	}
+	if err = a.Ctx.Orm.Sync2(new(model.User)); err != nil {
+		return err
+	}
+	if err = a.Ctx.Orm.Sync2(new(model.Role)); err != nil {
+		return err
+	}
+	if err = a.Ctx.Orm.Sync2(new(model.UserRole)); err != nil {
+		return err
+	}
+	//if err = a.Ctx.Orm.Sync2(new(model.UserToken)); err != nil {
+	//	return err
+	//}
 
 	return nil
 }

@@ -1,5 +1,7 @@
 package constant
 
+import "time"
+
 const ServiceDev = "dev"
 const ServiceProd = "prod"
 
@@ -17,3 +19,7 @@ func GetTrafficUnits() []string {
 		"hour", "day", "month",
 	}
 }
+
+const JwtSecret = "infuser-auther-jwt-secret"
+const JwtExpInterval = 1 * time.Hour
+const RefreshTokenExpInterval = 24 * time.Hour

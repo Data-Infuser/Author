@@ -14,11 +14,11 @@ type Operation struct {
 	Id        uint `xorm:"pk"`
 	AppId     uint `xorm:"index"`
 	EndPoint  string
-	IsDel     bool      `xorm:index default 0`
-	Version   int       `xorm:"version"`
-	CreatedAt time.Time `xorm:"created"`
-	UpdatedAt time.Time `xorm:"updated"`
-	DeletedAt time.Time `xorm:"deleted index"`
+	IsDel     bool       `xorm:index default 0`
+	Version   int        `xorm:"version"`
+	CreatedAt time.Time  `xorm:"created"`
+	UpdatedAt time.Time  `xorm:"updated"`
+	DeletedAt *time.Time `xorm:"deleted index"`
 
 	App App `xorm:"- extends"`
 }

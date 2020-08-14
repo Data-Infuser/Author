@@ -13,13 +13,13 @@ import (
 
 // App Api 서비스 관리 모델
 type App struct {
-	Id        uint      `xorm:"pk"`
-	NameSpace string    `xorm:"unique"`
-	IsDel     bool      `xorm:index default 0`
-	Version   int       `xorm:"version"`
-	CreatedAt time.Time `xorm:"created"`
-	UpdatedAt time.Time `xorm:"updated"`
-	DeletedAt time.Time `xorm:"deleted index"`
+	Id        uint       `xorm:"pk"`
+	NameSpace string     `xorm:"unique"`
+	IsDel     bool       `xorm:index default 0`
+	Version   int        `xorm:"version"`
+	CreatedAt time.Time  `xorm:"created"`
+	UpdatedAt time.Time  `xorm:"updated"`
+	DeletedAt *time.Time `xorm:"deleted index"`
 
 	Operations []Operation `xorm:"- extends"`
 	Traffics   []Traffic   `xorm:"- extends"`

@@ -41,11 +41,14 @@ func (s *Server) Run(network, address string) error {
 
 	appTokenHandler := handler.NewAppTokenHandler(s.ctx)
 	appHandler := handler.NewAppHandler(s.ctx)
+	authHandler := handler.NewAuthHandler(s.ctx)
 
 	// Token 기반의 인증 처리
 	grpc_author.RegisterApiAuthServiceServer(s.grpcServer, newApiAuthServer(appTokenHandler))
 
 	grpc_author.RegisterAppManagerServer(s.grpcServer, newAppManagerServer(appHandler))
+
+	grpc_author.RegisterAuthServiceServer(s.grpcServer, newAuthServer(authHandler))
 
 	go func() {
 		defer s.grpcServer.GracefulStop()

@@ -11,6 +11,12 @@ type apiAuthServer struct {
 	handler *handler.AppTokenHandler
 }
 
+func newApiAuthServer(handler *handler.AppTokenHandler) grpc_author.ApiAuthServiceServer {
+	return &apiAuthServer{
+		handler: handler,
+	}
+}
+
 func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (*grpc_author.ApiAuthRes, error) {
 	token := model.Token{Token: req.Token, IsDel: false}
 	operation := model.Operation{
@@ -25,10 +31,4 @@ func (a *apiAuthServer) Auth(ctx context.Context, req *grpc_author.ApiAuthReq) (
 	}
 
 	return res, nil
-}
-
-func newApiAuthServer(handler *handler.AppTokenHandler) grpc_author.ApiAuthServiceServer {
-	return &apiAuthServer{
-		handler: handler,
-	}
 }
