@@ -91,19 +91,14 @@ func (a *authServer) Login(ctx context.Context, req *grpc_author.LoginReq) (*grp
 	expiresIn, _ := ptypes.TimestampProto(*utr.Token.JwtExpiredAt)
 	refreshTokenExpiresIn, _ := ptypes.TimestampProto(*utr.Token.RefreshTokenExpiredAt)
 
-	ar := &grpc_author.AuthRes{
+	// TODO: BloopRPC에서 timestamp 값이 포함된 경우 response의 출력오류 발생(실제 값은 정상 입력되어있음)
+	return &grpc_author.AuthRes{
 		Code:                  grpc_author.AuthResult_VALID,
 		Jwt:                   utr.Token.Jwt,
-		ExpiresIn:             expiresIn,
 		RefreshToken:          utr.Token.RefreshToken,
+		ExpiresIn:             expiresIn,
 		RefreshTokenExpiresIn: refreshTokenExpiresIn,
-	}
-
-	a.handler.Ctx.Logger.WithFields(logrus.Fields{
-		"ar": fmt.Sprintf("%+v", ar),
-	}).Debug("Token Info")
-
-	return ar, nil
+	}, nil
 }
 
 func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenReq) (*grpc_author.AuthRes, error) {
