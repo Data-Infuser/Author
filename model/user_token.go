@@ -1,11 +1,10 @@
 package model
 
 import (
-	"net/http"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	errors "gitlab.com/promptech1/infuser-author/error"
+	"gitlab.com/promptech1/infuser-author/constant"
 	"xorm.io/xorm"
 )
 
@@ -19,11 +18,6 @@ type UserToken struct {
 	RefreshTokenExpiredAt *time.Time
 	CreatedAt             time.Time `xorm:"created"`
 	UpdatedAt             time.Time `xorm:"updated"`
-}
-
-type UserTokenRel struct {
-	User  User      `xorm:"extends"`
-	Token UserToken `xorm:"extends"`
 }
 
 type TokenClaims struct {
@@ -47,28 +41,21 @@ func (ut *UserToken) Save(orm *xorm.Engine) error {
 	return nil
 }
 
-func (ut *UserTokenRel) FindByUserLoginId(orm *xorm.Engine) error {
-	found, err := orm.Table("user").Join(
-		"LEFT OUTER", "user_token",
-		"user.id = user_token.user_id",
-	).Where("user.login_id = ?", ut.User.LoginId).Get(ut)
+func (ut *UserToken) SetRefreshToken(refreshToken string) {
+	ut.RefreshToken = refreshToken
+	refreshExp := time.Now().Add(constant.RefreshTokenExpInterval)
+	ut.RefreshTokenExpiredAt = &refreshExp
+}
 
-	if err != nil {
-		return errors.NewWithPrefix(err, "database error")
-	}
+func CheckRefreshToken(orm *xorm.Engine, refreshToken string) (bool, error) {
+	ut := &UserToken{RefreshToken: refreshToken}
+	return orm.Get(ut)
+}
 
-	if !found {
-		return errors.NewWithCode(http.StatusNotFound, "UserToken not found")
+func (ut *UserToken) FindUserTokenByRefreshToken(orm *xorm.Engine) error {
+	if _, err := orm.Get(ut); err != nil {
+		return err
 	}
 
 	return nil
-}
-
-func FindUserTokenByRefreshToken(orm *xorm.Engine, refreshToken string) (*UserToken, error) {
-	ut := UserToken{RefreshToken: refreshToken}
-	if _, err := orm.Get(&ut); err != nil {
-		return nil, err
-	}
-
-	return &ut, nil
 }
