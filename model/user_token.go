@@ -4,7 +4,10 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
+	"github.com/golang/protobuf/ptypes"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"gitlab.com/promptech1/infuser-author/constant"
+	grpc_author "gitlab.com/promptech1/infuser-author/infuser-protobuf/gen/proto/author"
 	"xorm.io/xorm"
 )
 
@@ -47,15 +50,42 @@ func (ut *UserToken) SetRefreshToken(refreshToken string) {
 	ut.RefreshTokenExpiredAt = &refreshExp
 }
 
-func CheckRefreshToken(orm *xorm.Engine, refreshToken string) (bool, error) {
-	ut := &UserToken{RefreshToken: refreshToken}
-	return orm.Get(ut)
+func (ut *UserToken) GetValidGrpcRes() (*grpc_author.AuthRes, error) {
+	var expiresIn *timestamp.Timestamp
+	var refreshTokenExpiresIn *timestamp.Timestamp
+	var err error
+
+	if ut.JwtExpiredAt != nil {
+		if expiresIn, err = ptypes.TimestampProto(*ut.JwtExpiredAt); err != nil {
+			return nil, err
+		}
+	}
+
+	if ut.RefreshTokenExpiredAt != nil {
+		if refreshTokenExpiresIn, err = ptypes.TimestampProto(*ut.RefreshTokenExpiredAt); err != nil {
+			return nil, err
+		}
+	}
+
+	// TODO: BloopRPC에서 timestamp 값이 포함된 경우 response의 출력오류 발생(실제 값은 정상 입력되어있음)
+	return &grpc_author.AuthRes{
+		Code:                  grpc_author.AuthResult_VALID,
+		Jwt:                   ut.Jwt,
+		RefreshToken:          ut.RefreshToken,
+		ExpiresIn:             expiresIn,
+		RefreshTokenExpiresIn: refreshTokenExpiresIn,
+	}, nil
 }
 
-func (ut *UserToken) FindUserTokenByRefreshToken(orm *xorm.Engine) error {
+func (ut *UserToken) FindUserToken(orm *xorm.Engine) error {
 	if _, err := orm.Get(ut); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func CheckRefreshToken(orm *xorm.Engine, refreshToken string) (bool, error) {
+	ut := &UserToken{RefreshToken: refreshToken}
+	return orm.Get(ut)
 }

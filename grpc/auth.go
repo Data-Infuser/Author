@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
-	"github.com/golang/protobuf/ptypes"
-	"github.com/golang/protobuf/ptypes/timestamp"
 	"github.com/sirupsen/logrus"
 	"gitlab.com/promptech1/infuser-author/constant"
 	"gitlab.com/promptech1/infuser-author/handler"
@@ -88,22 +86,12 @@ func (a *authServer) Login(ctx context.Context, req *grpc_author.LoginReq) (*grp
 		}).Debug("Token Info")
 	}
 
-	expiresIn, _ := ptypes.TimestampProto(*utr.Token.JwtExpiredAt)
-	refreshTokenExpiresIn, _ := ptypes.TimestampProto(*utr.Token.RefreshTokenExpiredAt)
-
-	// TODO: BloopRPC에서 timestamp 값이 포함된 경우 response의 출력오류 발생(실제 값은 정상 입력되어있음)
-	return &grpc_author.AuthRes{
-		Code:                  grpc_author.AuthResult_VALID,
-		Jwt:                   utr.Token.Jwt,
-		RefreshToken:          utr.Token.RefreshToken,
-		ExpiresIn:             expiresIn,
-		RefreshTokenExpiresIn: refreshTokenExpiresIn,
-	}, nil
+	return utr.Token.GetValidGrpcRes()
 }
 
-func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenReq) (*grpc_author.AuthRes, error) {
-	ut := model.UserToken{RefreshToken: req.RefreshToken}
-	err := ut.FindUserTokenByRefreshToken(a.handler.Ctx.Orm)
+func (a *authServer) Auth(ctx context.Context, req *grpc_author.JwtReq) (*grpc_author.AuthRes, error) {
+	ut := model.UserToken{Jwt: req.Jwt}
+	err := ut.FindUserToken(a.handler.Ctx.Orm)
 
 	if err != nil {
 		a.handler.Ctx.Logger.Info(err.Error())
@@ -111,7 +99,23 @@ func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenR
 	}
 
 	if ut.Id == 0 {
-		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_NOT_REGISTERED}, nil
+		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INVALID_TOKEN}, nil
+	}
+
+	return ut.GetValidGrpcRes()
+}
+
+func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenReq) (*grpc_author.AuthRes, error) {
+	ut := model.UserToken{RefreshToken: req.RefreshToken}
+	err := ut.FindUserToken(a.handler.Ctx.Orm)
+
+	if err != nil {
+		a.handler.Ctx.Logger.Info(err.Error())
+		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
+	}
+
+	if ut.Id == 0 {
+		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INVALID_TOKEN}, nil
 	}
 
 	refreshToken, err := a.genRefreshToken()
@@ -126,14 +130,7 @@ func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenR
 		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
 	}
 
-	return &grpc_author.AuthRes{
-		Code:         grpc_author.AuthResult_VALID,
-		RefreshToken: ut.RefreshToken,
-		RefreshTokenExpiresIn: &timestamp.Timestamp{
-			Seconds: int64(ut.RefreshTokenExpiredAt.Second()),
-			Nanos:   int32(ut.RefreshTokenExpiredAt.Nanosecond()),
-		},
-	}, nil
+	return ut.GetValidGrpcRes()
 }
 
 func (a *authServer) genRefreshToken() (string, error) {
