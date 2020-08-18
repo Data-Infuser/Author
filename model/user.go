@@ -23,8 +23,6 @@ type User struct {
 	CreatedAt           time.Time  `xorm:"created"`
 	UpdatedAt           time.Time  `xorm:"updated"`
 	DeletedAt           *time.Time `xorm:"deleted index"`
-
-	Group Group `xorm:"- extends"`
 }
 
 func (User) TableName() string {
@@ -64,4 +62,12 @@ func ComparePasswords(hashedPwd string, plainPwd string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func CheckLoginId(orm *xorm.Engine, loginId string) (bool, error) {
+	return orm.Get(&User{LoginId: loginId})
+}
+
+func CheckEmail(orm *xorm.Engine, email string) (bool, error) {
+	return orm.Get(&User{Email: email})
 }

@@ -42,6 +42,7 @@ func (s *Server) Run(network, address string) error {
 	appTokenHandler := handler.NewAppTokenHandler(s.ctx)
 	appHandler := handler.NewAppHandler(s.ctx)
 	authHandler := handler.NewAuthHandler(s.ctx)
+	userHandler := handler.NewUserHandler(s.ctx)
 
 	// Token 기반의 인증 처리
 	grpc_author.RegisterApiAuthServiceServer(s.grpcServer, newApiAuthServer(appTokenHandler))
@@ -49,6 +50,7 @@ func (s *Server) Run(network, address string) error {
 	grpc_author.RegisterAppManagerServer(s.grpcServer, newAppManagerServer(appHandler))
 
 	grpc_author.RegisterAuthServiceServer(s.grpcServer, newAuthServer(authHandler))
+	grpc_author.RegisterUserServiceServer(s.grpcServer, newUserServer(userHandler))
 
 	go func() {
 		defer s.grpcServer.GracefulStop()
