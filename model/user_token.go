@@ -36,7 +36,7 @@ func (ut *UserToken) Save(orm *xorm.Engine) error {
 			return err
 		}
 	} else {
-		if _, err := orm.Update(ut); err != nil {
+		if _, err := orm.ID(ut.Id).Update(ut); err != nil {
 			return err
 		}
 	}
