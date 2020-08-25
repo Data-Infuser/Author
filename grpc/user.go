@@ -31,7 +31,7 @@ func (s userServer) Signup(ctx context.Context, req *grpc_author.UserReq) (*grpc
 		}, nil
 	}
 
-	if has, err := model.CheckLoginId(s.handler.Ctx.Orm, req.Email); err != nil {
+	if has, err := model.CheckEmail(s.handler.Ctx.Orm, req.Email); err != nil {
 		return nil, err
 	} else if has {
 		return &grpc_author.UserRes{
