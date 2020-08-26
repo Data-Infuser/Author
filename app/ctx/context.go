@@ -19,12 +19,7 @@ type Context struct {
 }
 
 type Config struct {
-	ServerConfig ServerConfig `yaml:"server"`
 	LoggerConfig LoggerConfig `yaml:"logger"`
-}
-
-type ServerConfig struct {
-	Port int `yaml:"port"`
 }
 
 type LoggerConfig struct {

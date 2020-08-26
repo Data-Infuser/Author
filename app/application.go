@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	log2 "log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -37,8 +36,6 @@ func New(context context.Context) (*Application, error) {
 	a.Context = context
 
 	env := os.Getenv("AUTHOR_ENV")
-	log2.Printf("Author ENV: %s", env)
-
 	if len(env) > 0 && env == constant.ServiceProd {
 		a.Ctx.Mode = constant.ServiceProd
 	} else if len(env) > 0 && env == constant.ServiceStage {
@@ -58,6 +55,8 @@ func New(context context.Context) (*Application, error) {
 		return nil, err
 	}
 
+	a.Ctx.Logger.Debug(fmt.Sprintf("Run author service in '%s' mode", a.Ctx.Mode))
+
 	if err = a.initDB(); err != nil {
 		return nil, err
 	}
@@ -70,7 +69,10 @@ func New(context context.Context) (*Application, error) {
 // Run starts application
 func (a *Application) Run(network, addr string) {
 	a.server = server.New(a.Ctx, a.Context)
-	a.server.Run(network, addr)
+	if err := a.server.Run(network, addr); err != nil {
+		a.Ctx.Logger.Info("Service Run failed")
+		a.Ctx.Logger.Info(err.Error())
+	}
 }
 
 func (a *Application) initConfig() error {

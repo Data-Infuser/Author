@@ -20,17 +20,13 @@ import (
 
 var (
 	network = flag.String("network", "tcp", `one of "tcp" or "unix". Must be consistent to -endpoint`)
+	port    = flag.Int("service port", 9090, "listen port")
 )
 
 func main() {
 	flag.Parse()
 
 	ctx := context.Background()
-
-	// Output to stdout instead of the default stderr
-	// Can be any io.Writer, see below for File example
-
-	// Only log the warning severity or above.
 
 	var (
 		err error
@@ -46,7 +42,7 @@ func main() {
 	// 주기적 통계 데이터 저장 처리
 	// go runCron(a.Ctx)
 
-	a.Run(*network, fmt.Sprintf(":%d", a.Ctx.Config.ServerConfig.Port))
+	a.Run(*network, fmt.Sprintf(":%d", *port))
 }
 
 func runCron(ctx *ctx.Context) {
