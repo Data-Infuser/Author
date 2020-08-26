@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	log2 "log"
 	"os"
 
 	"github.com/go-redis/redis/v8"
@@ -36,10 +37,14 @@ func New(context context.Context) (*Application, error) {
 	a.Context = context
 
 	env := os.Getenv("AUTHOR_ENV")
-	if len(env) == 0 || env != constant.ServiceProd {
-		a.Ctx.Mode = constant.ServiceDev
-	} else {
+	log2.Printf("Author ENV: %s", env)
+
+	if len(env) > 0 && env == constant.ServiceProd {
 		a.Ctx.Mode = constant.ServiceProd
+	} else if len(env) > 0 && env == constant.ServiceStage {
+		a.Ctx.Mode = constant.ServiceStage
+	} else {
+		a.Ctx.Mode = constant.ServiceDev
 	}
 
 	a.Ctx.DBConfigFileName = fmt.Sprintf("config/%s/database.yaml", a.Ctx.Mode)
@@ -184,19 +189,16 @@ func (a *Application) initLogger() error {
 		os.Mkdir("log", 0777)
 	}
 
-	dir, _ := os.Getwd()
-	fmt.Println("CWD:", dir)
-
 	if a.Ctx.Mode == constant.ServiceDev {
 		logger.SetLevel(logrus.DebugLevel)
-		// logger.SetFormatter(&logrus.JSONFormatter{})
-		logger.Out = os.Stdout
 	} else {
 		logger.SetLevel(logrus.InfoLevel)
-		//log
-		file, _ := os.OpenFile(a.Ctx.Config.LoggerConfig.FileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
-		logger.Out = file
 	}
+
+	// logger.SetFormatter(&logrus.JSONFormatter{})
+	logger.Out = os.Stdout
+	//file, _ := os.OpenFile(a.Ctx.Config.LoggerConfig.FileName, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0755)
+	//logger.Out = file
 
 	a.Ctx.Logger = logger.WithFields(logrus.Fields{
 		"tag": a.Ctx.Config.LoggerConfig.Tag,

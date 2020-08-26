@@ -1,9 +1,6 @@
 FROM amd64/golang:1.14
 
-ENV GO111MODULE=on \
-    GOOS=linux \
-    GOARCH=amd64
-
+RUN mkdir -p /log
 WORKDIR /go/src/author
 
 COPY go.sum go.mod ./
@@ -11,6 +8,14 @@ COPY go.sum go.mod ./
 RUN go mod download
 
 COPY . .
+
+# 배포 환경 설정
+ARG AUTHOR_ENV=dev
+
+ENV GO111MODULE=on \
+    GOOS=linux \
+    GOARCH=amd64 \
+    AUTHOR_ENV=$AUTHOR_ENV
 
 # Build the Go app
 RUN go build -o main .

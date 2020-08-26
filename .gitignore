@@ -3,11 +3,10 @@ infuser-protobuf
 
 config/config.yaml
 
-config/dev/database.yaml
-config/prod/database.yaml
+config/dev
+config/stage
+config/prod
 
-config/dev/redis.yaml
-config/prod/redis.yaml
 
 *.log
 

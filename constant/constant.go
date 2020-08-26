@@ -3,6 +3,7 @@ package constant
 import "time"
 
 const ServiceDev = "dev"
+const ServiceStage = "stage"
 const ServiceProd = "prod"
 
 const KeyApp = "App:"
