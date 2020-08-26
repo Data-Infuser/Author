@@ -79,7 +79,7 @@ func (a *Application) initConfig() error {
 	var file []byte
 	var err error
 
-	ballast := make([]byte, 10<<30)
+	ballast := make([]byte, 10<<12)
 	_ = ballast
 
 	if file, err = ioutil.ReadFile("config/config.yaml"); err != nil {
