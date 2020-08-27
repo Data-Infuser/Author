@@ -1,6 +1,5 @@
 FROM amd64/golang:1.14
 
-RUN mkdir -p /log
 WORKDIR /go/src/author
 
 COPY go.sum go.mod ./
@@ -20,7 +19,7 @@ ENV GO111MODULE=on \
 # Build the Go app
 RUN go build -o main .
 
-# Expose port 8080 to the outside world
+# Expose port 9090 to the outside world
 EXPOSE 9090
 
 # Command to run the executable

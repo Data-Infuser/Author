@@ -28,6 +28,9 @@ func main() {
 
 	ctx := context.Background()
 
+	ballast := make([]byte, 10<<24)
+	_ = ballast
+
 	var (
 		err error
 		a   *app.Application
