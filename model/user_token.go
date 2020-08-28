@@ -24,6 +24,7 @@ type UserToken struct {
 }
 
 type TokenClaims struct {
+	Id       uint   `json:"id"`
 	LoginId  string `json:"loginId"`
 	Email    string `json:"email"`
 	Username string `json:"username"`

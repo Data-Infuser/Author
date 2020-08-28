@@ -1,14 +1,14 @@
 package ctx
 
 import (
-	log "github.com/sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"gitlab.com/promptech1/infuser-author/database"
 	"xorm.io/xorm"
 )
 
 type Context struct {
 	Mode                string
-	Logger              *log.Entry
+	Logger              *logrus.Entry
 	Orm                 *xorm.Engine
 	RedisDB             *database.RedisDB
 	Config              *Config

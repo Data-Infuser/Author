@@ -127,7 +127,7 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 				"MaxTraffic":    maxTraffic,
 			}).Debug("AppTrafficKey Check")
 
-			tokenTrafficKey := fmt.Sprintf("%s%d:%s", constant.KeyTrafficPrefix, operation.AppId, unit)
+			tokenTrafficKey := fmt.Sprintf("%s%d:%d:%s", constant.KeyTrafficPrefix, token.Id, operation.AppId, unit)
 			h.Ctx.Logger.WithField("TokenTrafficKey", tokenTrafficKey).Debug("TokenTrafficKey Check")
 			tokenTrafficVal, err := h.Ctx.RedisDB.Get(tokenTrafficKey, "uint")
 			if err != nil && err == redis.Nil {

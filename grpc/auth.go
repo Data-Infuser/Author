@@ -49,7 +49,7 @@ func (a *authServer) Login(ctx context.Context, req *grpc_author.LoginReq) (*grp
 		jwtExp := time.Now().Add(constant.JwtExpInterval)
 
 		claims := &model.TokenClaims{
-			LoginId: utr.User.LoginId, Email: utr.User.Email, Username: utr.User.Name,
+			Id: utr.User.Id, LoginId: utr.User.LoginId, Email: utr.User.Email, Username: utr.User.Name,
 			StandardClaims: jwt.StandardClaims{
 				ExpiresAt: jwtExp.Unix(),
 			},
