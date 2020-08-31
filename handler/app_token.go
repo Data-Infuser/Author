@@ -128,12 +128,15 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 			}).Debug("AppTrafficKey Check")
 
 			tokenTrafficKey := fmt.Sprintf("%s%d:%d:%s", constant.KeyTrafficPrefix, token.Id, operation.AppId, unit)
+			tokenTrafficDetailKey := fmt.Sprintf("%s%d:%d:%d:%s", constant.KeyTrafficDetailPrefix, token.Id, operation.AppId, operation.Id, unit)
+
 			h.Ctx.Logger.WithField("TokenTrafficKey", tokenTrafficKey).Debug("TokenTrafficKey Check")
 			tokenTrafficVal, err := h.Ctx.RedisDB.Get(tokenTrafficKey, "uint")
 			if err != nil && err == redis.Nil {
 				tokenTraffic = uint(0)
 				h.Ctx.RedisDB.SAdd(constant.KEY_TRAFFIC_SET+unit, tokenTrafficKey)
 			} else {
+				h.Ctx.RedisDB.SAdd(constant.KeyTrafficDetailSet+unit, tokenTrafficDetailKey)
 				tokenTraffic = tokenTrafficVal.(uint)
 			}
 
@@ -146,6 +149,7 @@ func (h *AppTokenHandler) CheckAppToken(token *model.Token, operation *model.Ope
 
 			if tokenTraffic < maxTraffic {
 				h.Ctx.RedisDB.Incr(tokenTrafficKey)
+				h.Ctx.RedisDB.Incr(tokenTrafficDetailKey)
 			} else {
 				isValid = false
 			}
