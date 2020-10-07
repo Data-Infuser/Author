@@ -134,7 +134,7 @@ func (h *AppHandler) Destroy(appId uint) error {
 		return err
 	}
 	// 1-1. DB 삭제 처리
-	operationSql := "UPDATE operation SET deleted_at = ? WHERE app_id = ? AND deleted_at IS NULL"
+	operationSql := "UPDATE operation SET deleted_at = ?, is_del = 1 WHERE app_id = ? AND deleted_at IS NULL"
 	if _, err := h.Ctx.Orm.Exec(operationSql, time.Now(), appId); err != nil {
 		session.Rollback()
 		return err

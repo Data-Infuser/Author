@@ -48,7 +48,7 @@ func (a *App) FindApp(orm *xorm.Engine) error {
 }
 
 func (a *App) Delete(orm *xorm.Engine) error {
-	sql := "UPDATE app SET deleted_at = ? WHERE id = ?"
+	sql := "UPDATE app SET deleted_at = ?, is_del = 1 WHERE id = ?"
 	if _, err := orm.Exec(sql, time.Now(), a.Id); err != nil {
 		return err
 	}
