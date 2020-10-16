@@ -31,3 +31,22 @@ func (ut *UserTokenRel) FindByUserLoginId(orm *xorm.Engine) error {
 
 	return nil
 }
+
+func (ut *UserTokenRel) FindByRefreshToken(orm *xorm.Engine) error {
+	var utr UserTokenRel
+	found, err := orm.Table("user").Join(
+		"INNER", "user_token",
+		"user.id = user_token.user_id",
+	).Where("user_token.refresh_token = ?", ut.Token.RefreshToken).Get(&utr)
+	*ut = utr
+
+	if err != nil {
+		return errors.NewWithPrefix(err, "database error")
+	}
+
+	if !found {
+		return errors.NewWithCode(http.StatusNotFound, "UserToken not found")
+	}
+
+	return nil
+}
