@@ -43,47 +43,11 @@ func (a *authServer) Login(ctx context.Context, req *grpc_author.LoginReq) (*grp
 	}).Debug("Token Info")
 
 	if utr.Token.Id == 0 || utr.Token.JwtExpiredAt == nil || time.Now().After(*utr.Token.JwtExpiredAt) {
-		utr.Token.UserId = utr.User.Id
+		authRes := a.genTokens(&utr)
 
-		// JWT 만료 시간 설정
-		jwtExp := time.Now().Add(constant.JwtExpInterval)
-
-		claims := &model.TokenClaims{
-			Id: utr.User.Id, LoginId: utr.User.LoginId, Email: utr.User.Email, Username: utr.User.Name,
-			StandardClaims: jwt.StandardClaims{
-				ExpiresAt: jwtExp.Unix(),
-			},
+		if authRes != nil {
+			return authRes, nil
 		}
-
-		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-		jwt, err := token.SignedString([]byte(constant.JwtSecret))
-		if err != nil {
-			// If there is an error in creating the JWT return an internal server error
-			a.handler.Ctx.Logger.Info(err.Error())
-			return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
-		}
-		a.handler.Ctx.Logger.Debug(jwt)
-		utr.Token.Jwt = jwt
-		utr.Token.JwtExpiredAt = &jwtExp
-
-		if len(utr.Token.RefreshToken) == 0 || time.Now().After(*utr.Token.RefreshTokenExpiredAt) {
-			refreshToken, err := a.genRefreshToken()
-			if err != nil {
-				a.handler.Ctx.Logger.Info(err.Error())
-				return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
-			}
-
-			utr.Token.SetRefreshToken(refreshToken)
-		}
-
-		if err := utr.Token.Save(a.handler.Ctx.Orm); err != nil {
-			a.handler.Ctx.Logger.Info(err.Error())
-			return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
-		}
-
-		a.handler.Ctx.Logger.WithFields(logrus.Fields{
-			"token detail": fmt.Sprintf("%+v", utr.Token),
-		}).Debug("Token Info")
 	}
 
 	return utr.Token.GetValidGrpcRes()
@@ -106,31 +70,25 @@ func (a *authServer) Auth(ctx context.Context, req *grpc_author.JwtReq) (*grpc_a
 }
 
 func (a *authServer) Refresh(ctx context.Context, req *grpc_author.RefreshTokenReq) (*grpc_author.AuthRes, error) {
-	ut := model.UserToken{RefreshToken: req.RefreshToken}
-	err := ut.FindUserToken(a.handler.Ctx.Orm)
+	utr := relations.UserTokenRel{Token: model.UserToken{RefreshToken: req.RefreshToken}}
+	err := utr.FindByRefreshToken(a.handler.Ctx.Orm)
 
 	if err != nil {
 		a.handler.Ctx.Logger.Info(err.Error())
 		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
 	}
 
-	if ut.Id == 0 {
+	if utr.Token.Id == 0 {
 		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INVALID_TOKEN}, nil
 	}
 
-	refreshToken, err := a.genRefreshToken()
-	if err != nil {
-		a.handler.Ctx.Logger.Info(err.Error())
-		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
+	authRes := a.genTokens(&utr)
+
+	if authRes != nil {
+		return authRes, nil
 	}
 
-	ut.SetRefreshToken(refreshToken)
-	if err := ut.Save(a.handler.Ctx.Orm); err != nil {
-		a.handler.Ctx.Logger.Info(err.Error())
-		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}, nil
-	}
-
-	return ut.GetValidGrpcRes()
+	return utr.Token.GetValidGrpcRes()
 }
 
 func (a *authServer) genRefreshToken() (string, error) {
@@ -149,4 +107,50 @@ func (a *authServer) genRefreshToken() (string, error) {
 			return refreshToken, nil
 		}
 	}
+}
+
+func (a *authServer) genTokens(utr *relations.UserTokenRel) *grpc_author.AuthRes {
+	utr.Token.UserId = utr.User.Id
+
+	// JWT 만료 시간 설정
+	jwtExp := time.Now().Add(constant.JwtExpInterval)
+
+	claims := &model.TokenClaims{
+		Id: utr.User.Id, LoginId: utr.User.LoginId, Email: utr.User.Email, Username: utr.User.Name,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: jwtExp.Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	jwt, err := token.SignedString([]byte(constant.JwtSecret))
+	if err != nil {
+		// If there is an error in creating the JWT return an internal server error
+		a.handler.Ctx.Logger.Info(err.Error())
+		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}
+	}
+	a.handler.Ctx.Logger.Debug(jwt)
+	utr.Token.Jwt = jwt
+	utr.Token.JwtExpiredAt = &jwtExp
+
+	if len(utr.Token.RefreshToken) == 0 || time.Now().After(*utr.Token.RefreshTokenExpiredAt) {
+		refreshToken, err := a.genRefreshToken()
+		if err != nil {
+			a.handler.Ctx.Logger.Info(err.Error())
+			return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}
+		}
+
+		utr.Token.SetRefreshToken(refreshToken)
+	}
+
+	if err := utr.Token.Save(a.handler.Ctx.Orm); err != nil {
+		a.handler.Ctx.Logger.Info(err.Error())
+		return &grpc_author.AuthRes{Code: grpc_author.AuthResult_INTERNAL_EXCEPTION}
+	}
+
+	a.handler.Ctx.Logger.WithFields(logrus.Fields{
+		"token detail": fmt.Sprintf("%+v", utr.Token),
+	}).Debug("Token Info")
+
+	return nil
 }
